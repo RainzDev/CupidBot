@@ -5,6 +5,7 @@ from settings import TOKEN
 #Cog Modules
 from levels import Levels
 from moderation import Moderation
+from config import Config
 
 class Bot(Bot):
     def __init__(self):
@@ -13,6 +14,7 @@ class Bot(Bot):
     async def setup_hook(self) -> None:
         await self.add_cog(Levels())
         await self.add_cog(Moderation())
+        await self.add_cog(Config())
 
 
 

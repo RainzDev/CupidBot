@@ -26,7 +26,7 @@ class Moderation(Cog):
             "expires": expiration
         }
         resp = infractions.insert_one(data)
-        description = f"❥﹒User: {member.mention}\n❥﹒Expiration: <t:{expiration}:R>\n❥﹒Reason:\n`{reason}`"
+        description = f"❥﹒User: {member.mention}\n❥﹒Points: `{points}`\n❥﹒Expiration: <t:{expiration}:R>\n❥﹒Reason:\n`{reason}`"
         moderation_embed = Embed(title="Infraction", description=description, color=0xff964f)
         moderation_embed.set_author(name=f"{member.global_name} | {member.id}", icon_url=member.avatar.url)
         moderation_embed.set_footer(text=f"Infraction Id: {resp.inserted_id}")

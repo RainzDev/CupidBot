@@ -1,4 +1,4 @@
-![Cupid Pfp](https://cdn.discordapp.com/avatars/1300912972977279079/36e065aa25a8d8587cfd1a2c5fa56fe3.png?size=512)
+![Cupid Pfp](https://cdn.discordapp.com/avatars/1300912972977279079/36e065aa25a8d8587cfd1a2c5fa56fe3.png?size=128)
 
 # Cupid Bot
 

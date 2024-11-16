@@ -6,6 +6,7 @@ from settings import TOKEN
 from levels import Levels
 from moderation import Moderation
 from config import Config
+from matching import Matching
 
 class Bot(Bot):
     def __init__(self):
@@ -15,6 +16,7 @@ class Bot(Bot):
         await self.add_cog(Levels())
         await self.add_cog(Moderation())
         await self.add_cog(Config())
+        await self.add_cog(Matching())
 
 
 

@@ -26,6 +26,10 @@ tree = bot.tree
 
 
 @bot.command()
+async def pfp(ctx:Context):
+    await ctx.send(f"`{ctx.author.avatar.url}`")
+
+@bot.command()
 @is_owner()
 async def sync(ctx:Context):
     msg = await ctx.send("Syncing..")

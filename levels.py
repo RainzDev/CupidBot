@@ -1,8 +1,10 @@
 # Level Features for the bot
-from discord import Embed, Member, Message, Interaction
+from discord import Embed, Member, Message, Interaction, File
 from discord.app_commands import command, Group
 from discord.ext.commands import Cog
 from database import levels, config
+
+from imagegen import generate_level, int_to_ordinal
 
 import random
 
@@ -15,6 +17,7 @@ class Levels(Cog):
     @Cog.listener('on_message')
     async def on_message(self, message:Message):
         if message.author.bot: return
+        if not message.guild: return # if not sent in a guild, ignore
         config_data:dict = config.find_one({"server_id":message.guild.id})
         data:dict = levels.find_one({"user_id":message.author.id})
         levelup = False
@@ -74,25 +77,46 @@ class Levels(Cog):
             await chan.send(f"Congratulations {message.author.mention}! You leveled up to `{level}`")
         
     
-    @command()
+    @command(description="View the level of yourself or another user")
     async def view_level(self, interaction:Interaction, member:Member=None, hidden:bool=False):
         if not member: member = interaction.user
         data:dict = levels.find_one({"user_id":member.id})
+        leaderboard:list = sorted(levels.find(), key=lambda x:x.get('level'), reverse=True)
+        user_ids = [record.get('user_id') for record in leaderboard] # make it easier to grab the index
+
+
         if not data:
             xp = 0
             level = 1
         else:
             xp = data.get("xp")
             level = data.get("level")
+
         
-        level_embed = Embed(title="Level", description=f"❥﹒Level: `{level}`\n❥﹒Xp: `{xp}/{level*100}`\n", color=0xffa1dc)
-        level_embed.set_author(name=member.global_name, icon_url=member.avatar.url)
-        level_embed.set_footer(text="This will be a pretty UI at somepoint!")
-        await interaction.response.send_message(embed=level_embed, ephemeral=hidden)
+        rank_place= int_to_ordinal(user_ids.index(member.id) + 1)
+        rank = f"{rank_place} Place"
+        
+        
+        generate_level(member.name, level,rank,xp,member.avatar.url)
+        file = File('output.png', filename=f"output_card.png")
+        
+        await interaction.response.send_message(ephemeral=hidden, file=file)
     
+
+
+    @command()
+    async def leaderboard(self, interaction:Interaction):
+        data:list = sorted(levels.find(), key=lambda x:x.get('level'), reverse=True)
+        description = "\n".join(f"{i+1} | Level `{record.get('level')}` | Xp `{record.get('xp')}` |  {interaction.guild.get_member(int(record.get('user_id'))).mention}" for i, record in enumerate(data[0:10]))
+        leaderboard_embed = Embed(title="Leaderboard", description=description, color=0xffa1dc)
+        await interaction.response.send_message(embed=leaderboard_embed)
+
+
 
     levels = Group(name="level", description="A group of level based commands", default_permissions=None)
     
+
+
 
     @levels.command(name="set_xp", description="sets a users xp")
     async def level_set_xp(self, interaction:Interaction, member:Member, xp:int):

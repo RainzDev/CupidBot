@@ -2,7 +2,7 @@
 from discord import Embed, Member, Message, Interaction, File
 from discord.app_commands import command, Group
 from discord.ext.commands import Cog
-from database import levels, config
+from database import levels as levels_data, config
 
 from imagegen import generate_level, int_to_ordinal
 
@@ -19,7 +19,7 @@ class Levels(Cog):
         if message.author.bot: return
         if not message.guild: return # if not sent in a guild, ignore
         config_data:dict = config.find_one({"server_id":message.guild.id})
-        data:dict = levels.find_one({"user_id":message.author.id})
+        data:dict = levels_data.find_one({"user_id":message.author.id})
         levelup = False
         if not data:
             xp = 0
@@ -66,7 +66,7 @@ class Levels(Cog):
 
         
 
-        levels.update_one({"user_id":message.author.id}, {"$set": {"xp":xp, "level":level}}, upsert=True)
+        levels_data.update_one({"user_id":message.author.id}, {"$set": {"xp":xp, "level":level}}, upsert=True)
         if levelup:
             data:dict = config.find_one({"server_id":message.guild.id})
             chan_id = data.get("levelup_chan", None)
@@ -80,8 +80,8 @@ class Levels(Cog):
     @command(description="View the level of yourself or another user")
     async def view_level(self, interaction:Interaction, member:Member=None, hidden:bool=False):
         if not member: member = interaction.user
-        data:dict = levels.find_one({"user_id":member.id})
-        leaderboard:list = sorted(levels.find(), key=lambda x:x.get('level'), reverse=True)
+        data:dict = levels_data.find_one({"user_id":member.id})
+        leaderboard:list = sorted(levels_data.find(), key=lambda x:x.get('level'), reverse=True)
         user_ids = [record.get('user_id') for record in leaderboard] # make it easier to grab the index
 
 
@@ -106,7 +106,7 @@ class Levels(Cog):
 
     @command()
     async def leaderboard(self, interaction:Interaction):
-        data:list = sorted(levels.find(), key=lambda x:x.get('level'), reverse=True)
+        data:list = sorted(levels_data.find(), key=lambda x:x.get('level'), reverse=True)
         description = "\n".join(f"{i+1} | Level `{record.get('level')}` | Xp `{record.get('xp')}` |  {interaction.guild.get_member(int(record.get('user_id'))).mention}" for i, record in enumerate(data[0:10]))
         leaderboard_embed = Embed(title="Leaderboard", description=description, color=0xffa1dc)
         await interaction.response.send_message(embed=leaderboard_embed)
@@ -120,15 +120,39 @@ class Levels(Cog):
 
     @levels.command(name="set_xp", description="sets a users xp")
     async def level_set_xp(self, interaction:Interaction, member:Member, xp:int):
-        levels.update_one({"user_id":member.id}, {"$set":{"xp":xp}}, upsert=True)
+        levels_data.update_one({"user_id":member.id}, {"$set":{"xp":xp}}, upsert=True)
         await interaction.response.send_message(f"I have set {member.mention}'s xp to `{xp}`")
     
 
 
     @levels.command(name="set_level", description="sets a users level")
     async def level_set_level(self, interaction:Interaction, member:Member, level:int):
-        levels.update_one({"user_id":member.id}, {"$set":{"level":level}}, upsert=True)
+        levels_data.update_one({"user_id":member.id}, {"$set":{"level":level}}, upsert=True)
         await interaction.response.send_message(f"I have set {member.mention}'s level to `{level}`")
+
+    
+    @levels.command(name="fix", description="give yourself the roles you deserve")
+    async def level_fix(self, interaction:Interaction, member:Member=None):
+        await interaction.response.defer()
+        member = member if member else interaction.user
+
+        config_data:dict = config.find_one({"server_id":interaction.guild.id})
+        member_data = levels_data.find_one({'user_id':member.id})
+
+        
+        level_rewards:dict = config_data.get('level_roles', None)
+        closest_level = max(int(level) for level in level_rewards.keys() if int(level) <= member_data.get('level'))
+
+        print(closest_level)
+
+        rewards = level_rewards.get(str(closest_level))
+
+        if rewards:
+            earned_roles = [interaction.guild.get_role(role_id) for role_id in rewards]
+            new_roles = list(set(member.roles) | set(earned_roles))
+            await member.edit(roles=new_roles)
+        
+        await interaction.followup.send('Done!')
     
     
 

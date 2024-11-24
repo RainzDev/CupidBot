@@ -79,6 +79,7 @@ class Levels(Cog):
     
     @command(description="View the level of yourself or another user")
     async def view_level(self, interaction:Interaction, member:Member=None, hidden:bool=False):
+        await interaction.response.defer()
         if not member: member = interaction.user
         data:dict = levels_data.find_one({"user_id":member.id})
         leaderboard:list = sorted(levels_data.find(), key=lambda x:x.get('level'), reverse=True)
@@ -100,7 +101,7 @@ class Levels(Cog):
         generate_level(member.name, level,rank,xp,member.avatar.url)
         file = File('output.png', filename=f"output_card.png")
         
-        await interaction.response.send_message(ephemeral=hidden, file=file)
+        await interaction.followup.send(ephemeral=hidden, file=file)
     
 
 

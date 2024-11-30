@@ -25,3 +25,9 @@ In your pull request, please include the following statement to confirm you agre
 
 ## Disclaimer
 This software is provided "AS IS", without any warranty of any kind, express or implied. See the [LICENSE](license) for further details.
+
+## Requirements
+To install all the required dependencies, run the following command:
+
+```bash
+pip install -r requirements.txt

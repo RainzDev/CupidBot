@@ -35,9 +35,25 @@ def find_compatible_profiles(user_id:int, members:list[Member]):
 
     user_ids = [member.id for member in members]
 
-    rejected_ids = data.get(['rejected_pairs'], [])
+    rejected_ids = data.get('rejected_pairs', [])
 
-    profiles = [profile for profile in matching.find({'approved':True}) if profile.get('user_id') in user_ids and not int(profile.get('age')) > age+2 and not int(profile.get('age')) < age-2 and not int(profile.get('user_id')) == user_id and not profile.get('paired') == True and not int(profile.get('user_id') in rejected_ids)]
+    selected_ids = data.get('selected_pairs', [])
+
+    
+    profiles = []
+    for profile in matching.find({'approved':True}):
+        if int(profile.get('user_id')) == user_id: continue
+        if profile.get('user_id') not in user_ids: continue
+        if int(profile.get('age')) > age+2: continue 
+        if int(profile.get('age')) < age-2: continue 
+        if profile.get('paired') == True: continue
+        if int(profile.get('user_id')) in rejected_ids: continue
+        if int(profile.get('user_id')) in selected_ids: continue
+
+        profiles.append(profile)
+
+
+
 
     if not profiles:
         return False, "their is no one for you to match with, sorry!"

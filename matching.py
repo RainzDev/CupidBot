@@ -93,13 +93,17 @@ class Matching(Cog):
     async def match(self, interaction:Interaction):
         if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
         await interaction.response.defer()
+
+        our_data = matching_db.find_one({'user_id':interaction.user.id})
+        if our_data.get('paired'): 
+            return await interaction.followup.send("You are already paired, you cant pair again! go to #tickets to remove the pair")
+
         #get our data to compare against
         state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)
         if not state:
             return await interaction.followup.send(data)
         profiles = data
          
-
 
         # get data from the database to pick randomly from
         
@@ -112,7 +116,7 @@ class Matching(Cog):
         profile_embed.set_author(name=member.name, icon_url=member.avatar.url)
         profile_embed.set_footer(text=f"Profile Id: {resp_id}")
 
-        await interaction.followup.send(embed=profile_embed, view=MatchingView(user_id))
+        await interaction.followup.send(embed=profile_embed, view=MatchingView(user_id), ephemeral=True)
 
 
     

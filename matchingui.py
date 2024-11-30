@@ -1,6 +1,8 @@
 from discord.ui import Select, View, Modal, TextInput, button, DynamicItem
 from discord import Button, ButtonStyle, Interaction, TextStyle, Embed, SelectOption
-from database import matching, generate_profile_description
+from database import matching, generate_profile_description, find_compatible_profiles
+
+import random
 
 
 class ProfileReasonModal(Modal):
@@ -197,23 +199,80 @@ class MatchingView(View):
         super().__init__(timeout=None)
 
     
-    
+    ### TODO
+    # remove our user_id from paired_with_us for all of our selected pairs
+    # delete the selected pairs from us and the user we matched with
     @button(label="Match", custom_id="matching_match",style=ButtonStyle.green)
     async def match(self, interaction:Interaction, button:Button):
         await interaction.response.defer()
-        matching.update_one({"user_id":interaction.id}, {"$push":{"selected_pairs":self.user_id}}) # the people WE __want__ to match with
-        matching.update_many({"user_id":self.user_id}, {"$push":{"pairs":interaction.id}}) # the person we want to match with, and all the other ppl who wanted to match with em
+        matching.update_one({"user_id":interaction.id}, {"$push":{"selected_pairs":{"$each": [self.user_id]}}}) # the people WE __want__ to match with
+        matching.update_many({"user_id":self.user_id}, {"$push":{"paired_with_us":{"$each": [interaction.user.id]}}}) # the person we want to match with, and all the other ppl who wanted to match with em
         data:dict = matching.find_one({"user_id":self.user_id})
         if interaction.user in data.get('selected_pairs'): # match condition
             # delete all selected and what not, give them the paired role, send rules and conditions in dms
             await interaction.followup.send("congratulations! you guys matched! you are now paired! read dms!", ephemeral=True)
+            pair_role = interaction.guild.get_role(1306300320443269190)
+            unpair_role = interaction.guild.get_role(1306300431303184434)
+
+            member_a = interaction.guild.get_member(interaction.user.id)
+            member_b = interaction.guild.get_member(self.user_id)
+
+            a_roles = set(member_a.roles)
+            try:
+                a_roles.remove(unpair_role)
+                a_roles.add(pair_role)
+            except: pass
+
+            b_roles = set(member_b.roles)
+            try:
+                b_roles.remove(unpair_role)
+                b_roles.add(pair_role)
+            except: pass
+
+            await member_a.edit(roles=a_roles)
+            await member_b.edit(roles=b_roles)
+
+            pairs_channel = interaction.guild.get_channel(1308436302999322704)
+
+            matching.update_one({'user_id':member_a.id}, {"$set":{"paired":True, "partner_id":member_b.id}})
+            matching.update_one({'user_id':member_b.id}, {"$set":{"paired":True, "partner_id":member_a.id}})
+            await pairs_channel.send(f"✨❤ {member_a.mention} + {member_b.mention} ❤✨")
+
 
             
 
-        await interaction.response.send_message("This does nothing cus it isnt coded yet")
-
-    @button(label="Reject", custom_id="matching_reject",style=ButtonStyle.red)
-    async def reject(self, interaction:Interaction, button:Button):
-        matching.update_one({"user_id":interaction.id}, {"$push":{"rejected_pairs":self.user_id}}) # the people we DONT want to match with
-        # call itself again
         
+
+    @button(label="Reject", custom_id="matching_reject", style=ButtonStyle.red)
+    async def reject(self, interaction: Interaction, button: Button):
+        matching.update_one(
+            {"user_id": interaction.user.id},  # Filter
+            {
+                "$push": {"rejected_pairs": {"$each": [self.user_id]}},  # Ensure it's treated as a list
+            },
+            upsert=True  # Create document if it doesn't exist
+    )
+        
+        await interaction.response.defer()
+        #get our data to compare against
+        state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)
+        if not state:
+            return await interaction.followup.send(data, ephemeral=True)
+        profiles = data
+         
+
+
+        # get data from the database to pick randomly from
+        
+        profile:dict = profiles[random.randint(0,len(profiles)-1)]
+        user_id = int(profile.get('user_id'))
+        member = interaction.guild.get_member(user_id)
+        description, resp_id = generate_profile_description(user_id)
+
+        profile_embed = Embed(title="Profile", description=description, color=0xffa1dc)
+        profile_embed.set_author(name=member.name, icon_url=member.avatar.url)
+        profile_embed.set_footer(text=f"Profile Id: {resp_id}")
+
+        await interaction.delete_original_response()
+
+        await interaction.followup.send(embed=profile_embed, view=MatchingView(user_id), ephemeral=True)

@@ -202,6 +202,7 @@ class MatchingView(View):
     ### TODO
     # remove our user_id from paired_with_us for all of our selected pairs
     # delete the selected pairs from us and the user we matched with
+    # add polish later
     @button(label="Match", custom_id="matching_match",style=ButtonStyle.green)
     async def match(self, interaction:Interaction, button:Button):
         await interaction.response.defer()

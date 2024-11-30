@@ -89,8 +89,9 @@ class Matching(Cog):
         await interaction.followup.send(f"You have `{len(profiles)}` compatible profiles to match with")
 
 
-    @matching.command()
+    @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
+        return await interaction.response.send_message("Command disabled for now", ephemeral=True)
         if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
         await interaction.response.defer()
 

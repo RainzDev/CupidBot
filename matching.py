@@ -78,26 +78,67 @@ class Matching(Cog):
 
     
     @matching.command(name="compatible", description="see all the compatiable profiles")
-    async def compatible(self, interaction:Interaction):
+    async def compatible(self, interaction:Interaction, member:Member=None):
+        member = member if member else interaction.user
         if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
         await interaction.response.defer()
-        state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)
+        state, data = find_compatible_profiles(member.id, interaction.guild.members)
         if not state:
             return await interaction.followup.send(data)
         profiles = data
 
         await interaction.followup.send(f"You have `{len(profiles)}` compatible profiles to match with")
 
+    @matching.command(name="unmatch", description="unmatch yourself from your pair")
+    async def unmatch(self, interaction:Interaction):
+        if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
+        await interaction.response.defer(ephemeral=True)
+
+        data:dict = matching_db.find_one({"user_id":interaction.user.id})
+
+        if not data.get('paired'):
+            return await interaction.followup.send("You arent even paired! cant unpair", ephemeral=True)
+        
+        partner_id = data.get('partner_id', 0)
+
+        partner = interaction.guild.get_member(partner_id) # we should check if they are in the server
+
+
+        matching_db.update_many({
+            "user_id": {
+                "$in": [interaction.user.id, partner_id]
+            }
+        },{
+            "$unset": {
+                "paired":"",
+                "partner_id":""
+            }
+        })
+
+        pair_role = interaction.guild.get_role(1306300320443269190)
+        unpair_role = interaction.guild.get_role(1306300431303184434)
+
+
+        await interaction.user.edit(roles=[role for role in interaction.user.roles if role.id != pair_role.id] + [unpair_role])
+        await partner.edit(roles=[role for role in partner.roles if role.id != pair_role.id] + [unpair_role])
+
+
+        await interaction.followup.send(f"You have successfully unpaired from {partner.mention}")
+        
+
+        
+
+
 
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
-        return await interaction.response.send_message("Command disabled for now", ephemeral=True)
         if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
+        
+        our_data:dict = matching_db.find_one({'user_id':interaction.user.id})
 
-        our_data = matching_db.find_one({'user_id':interaction.user.id})
         if our_data.get('paired'): 
-            return await interaction.followup.send("You are already paired, you cant pair again! go to #tickets to remove the pair")
+            return await interaction.followup.send("You are already paired, you cant pair again! use `/matching unmatch` to unmatch from your partner!")
 
         #get our data to compare against
         state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)

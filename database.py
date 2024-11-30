@@ -50,6 +50,7 @@ def find_compatible_profiles(user_id:int, members:list[Member]):
         if int(profile.get('user_id')) in rejected_ids: continue
         if int(profile.get('user_id')) in selected_ids: continue
 
+
         profiles.append(profile)
 
 

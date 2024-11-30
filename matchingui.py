@@ -2,6 +2,7 @@ from discord.ui import Select, View, Modal, TextInput, button, DynamicItem
 from discord import Button, ButtonStyle, Interaction, TextStyle, Embed, SelectOption
 from database import matching, generate_profile_description, find_compatible_profiles
 
+import time
 import random
 
 
@@ -206,39 +207,99 @@ class MatchingView(View):
     @button(label="Match", custom_id="matching_match",style=ButtonStyle.green)
     async def match(self, interaction:Interaction, button:Button):
         await interaction.response.defer()
-        matching.update_one({"user_id":interaction.id}, {"$push":{"selected_pairs":{"$each": [self.user_id]}}}) # the people WE __want__ to match with
-        matching.update_many({"user_id":self.user_id}, {"$push":{"paired_with_us":{"$each": [interaction.user.id]}}}) # the person we want to match with, and all the other ppl who wanted to match with em
+        matching.update_one({"user_id":interaction.user.id}, {"$push":{"selected_pairs":{"$each": [self.user_id]}}}) # the people WE __want__ to match with
+        matching.update_one({"user_id":self.user_id}, {"$push":{"paired_with_us":{"$each": [interaction.user.id]}}}) # the person we want to match with, and all the other ppl who wanted to match with em
         data:dict = matching.find_one({"user_id":self.user_id})
-        if interaction.user in data.get('selected_pairs'): # match condition
+
+        if interaction.user.id in data.get('selected_pairs', []): # match condition
             # delete all selected and what not, give them the paired role, send rules and conditions in dms
-            await interaction.followup.send("congratulations! you guys matched! you are now paired! read dms!", ephemeral=True)
             pair_role = interaction.guild.get_role(1306300320443269190)
             unpair_role = interaction.guild.get_role(1306300431303184434)
 
+            
+
             member_a = interaction.guild.get_member(interaction.user.id)
             member_b = interaction.guild.get_member(self.user_id)
+            
+            data_a:dict = matching.find_one({'user_id':member_a.id})
+            data_b:dict = matching.find_one({'user_id':member_b.id})
 
-            a_roles = set(member_a.roles)
-            try:
-                a_roles.remove(unpair_role)
-                a_roles.add(pair_role)
-            except: pass
+            selected_a = data_a.get('selected_pairs', []) # Ids of people who member_a matched with
+            selected_b = data_b.get('selected_pairs', []) # Ids of people who member_b matched with
 
-            b_roles = set(member_b.roles)
-            try:
-                b_roles.remove(unpair_role)
-                b_roles.add(pair_role)
-            except: pass
+            
+            matching.update_many({
+                "user_id":{
+                    "$in": selected_b
+                }
+            },
+            {
+                "$pull": {"paired_with_us":member_a.id} # remove member_a id from all the users member_a paired with
+            }) 
+        
+        
+            matching.update_many({
+                "user_id":{
+                    "$in": selected_a
+                }
+            },
+            {
+                "$pull": {"paired_with_us":member_b.id} # remove member_b id from all the users member_b paired with
+            }) 
+        
+            # delete selected pairs and paired with us list from both paired members. 
+            matching.update_many({"user_id": {"$in":[member_a.id,member_b.id]}}, {
+                "$unset": {
+                    "selected_pairs": "",
+                    "paired_with_us": "",
+                    "rejected_pairs": ""
+                }
+            })
+            
 
-            await member_a.edit(roles=a_roles)
-            await member_b.edit(roles=b_roles)
+            
+
+            await member_a.edit(roles=[role for role in member_a.roles if role.id != unpair_role.id] + [pair_role])
+            await member_b.edit(roles=[role for role in member_b.roles if role.id != unpair_role.id] + [pair_role])
 
             pairs_channel = interaction.guild.get_channel(1308436302999322704)
 
-            matching.update_one({'user_id':member_a.id}, {"$set":{"paired":True, "partner_id":member_b.id}})
-            matching.update_one({'user_id':member_b.id}, {"$set":{"paired":True, "partner_id":member_a.id}})
-            await pairs_channel.send(f"✨❤ {member_a.mention} + {member_b.mention} ❤✨")
+            matching.update_one({'user_id':member_a.id}, {"$set":{"paired":True, "partner_id":member_b.id, "match_date":int(time.time())}})
+            matching.update_one({'user_id':member_b.id}, {"$set":{"paired":True, "partner_id":member_a.id, "match_date":int(time.time())}})
 
+            try:
+                await member_a.send(f"you and {member_b.mention} have been matched and paired! this is usually a trial period of 1 week, to get unpaired create an unpair ticket in the server, feel free to dm each other and get to know each other")
+            except: pass
+
+            try:
+                await member_b.send(f"you and {member_a.mention} have been matched and paired! this is usually a trial period of 1 week, to get unpaired create an unpair ticket in the server, feel free to dm each other and get to know each other")
+            except: pass
+
+            await interaction.followup.send("congratulations! you guys matched! you are now paired! read dms!", ephemeral=True)
+            await pairs_channel.send(f"✨❤ {member_a.mention} + {member_b.mention} ❤✨")
+            return
+
+
+        # reroll cus not matched
+        state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)
+        if not state:
+            return await interaction.followup.send(data, ephemeral=True)
+        profiles = data
+         
+        # get data from the database to pick randomly from
+        
+        profile:dict = profiles[random.randint(0,len(profiles)-1)]
+        user_id = int(profile.get('user_id'))
+        member = interaction.guild.get_member(user_id)
+        description, resp_id = generate_profile_description(user_id)
+
+        profile_embed = Embed(title="Profile", description=description, color=0xffa1dc)
+        profile_embed.set_author(name=member.name, icon_url=member.avatar.url)
+        profile_embed.set_footer(text=f"Profile Id: {resp_id}")
+
+        await interaction.delete_original_response()
+
+        await interaction.followup.send(embed=profile_embed, view=MatchingView(user_id), ephemeral=True)
 
             
 

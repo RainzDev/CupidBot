@@ -3,7 +3,6 @@ from discord import Button, ButtonStyle, Interaction, TextStyle, Embed, SelectOp
 from database import matching, generate_profile_description
 
 
-
 class ProfileReasonModal(Modal):
     def __init__(self, status:str, uid:int):
         self.uid = uid
@@ -22,9 +21,6 @@ class ProfileReasonModal(Modal):
         except:
             interaction.followup.send("I can't dm the user!")
         
-        
-
-
 
 class ProfileApprovalView(View):
     def __init__(self, user_id:int):
@@ -129,7 +125,6 @@ class ProfileSexualitySelect(Select):
         await interaction.response.edit_message(embed=profile_embed)
 
 
-
 class ProfileEditModal(Modal):
     def __init__(self, data:dict):
         super().__init__(title="Edit Profile", timeout=None, custom_id="edit_profile_modal")
@@ -152,7 +147,6 @@ class ProfileEditModal(Modal):
         profile_embed.set_footer(text=f"Profile Id: {resp_id}")
 
         await interaction.response.edit_message(embed=profile_embed)
-
 
 
 class ProfileCreationView(View):
@@ -193,4 +187,20 @@ class ProfileCreationView(View):
         await chan.send(content="A new profile has been submitted and needs to be approved!", embed=profile_embed, view=ProfileApprovalView(interaction.user.id))
         await interaction.response.send_message("Your Profile has been submitted to be reviewed!", ephemeral=True)
         
-        
+
+
+# ---------------------------------------------------------------- ^^ profile stuff
+
+class MatchingView(View):
+    def __init__(self,):
+        super().__init__(timeout=None)
+
+    
+    
+    @button(label="Match", custom_id="matching_match",style=ButtonStyle.green)
+    async def match(self, interaction:Interaction, button:Button):
+        await interaction.response.send_message("This does nothing cus it isnt coded yet")
+
+    @button(label="Reject", custom_id="matching_reject",style=ButtonStyle.red)
+    async def reject(self, interaction:Interaction, button:Button):
+        await interaction.response.send_message("This does nothing cus it isnt coded yet")

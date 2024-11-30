@@ -2,7 +2,7 @@
 from discord import Embed, Member, Message, Interaction
 from discord.app_commands import command, Group, guild_only, describe, default_permissions
 from discord.ext.commands import Cog
-from database import matching as matching_db, generate_profile_description
+from database import matching as matching_db, generate_profile_description, find_compatible_profiles
 from matchingui import ProfileCreationView, MatchingView
 
 import random
@@ -51,8 +51,8 @@ class Matching(Cog):
 
 
         await interaction.followup.send(f"I have paired {member_a.mention} + {member_b.mention}! come back in a week to unpair / stay perm pairs")
-        matching_db.update_one({'user_id':member_a.id}, {"$set":{"paired":True}})
-        matching_db.update_one({'user_id':member_b.id}, {"$set":{"paired":True}})
+        matching_db.update_one({'user_id':member_a.id}, {"$set":{"paired":True, "partner_id":member_b.id}})
+        matching_db.update_one({'user_id':member_b.id}, {"$set":{"paired":True, "partner_id":member_a.id}})
         await pairs_channel.send(f"✨❤ {member_a.mention} + {member_b.mention} ❤✨")
         
 
@@ -81,14 +81,10 @@ class Matching(Cog):
     async def compatible(self, interaction:Interaction):
         if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
         await interaction.response.defer()
-        data:dict = matching_db.find_one({'user_id':interaction.user.id})
-        if not data: return await interaction.followup.send("You have no profile! Create one using `/matching profile create`")
-        if not data.get('approved'): return await interaction.followup.send("You havent been approved! please wait for it to be approved/denied")
-
-
-        age =  int(data.get('age'))
-        user_ids = [member.id for member in interaction.guild.members]
-        profiles = [profile for profile in matching_db.find({'approved':True}) if profile.get('user_id') in user_ids and not int(profile.get('age')) > age+2 and not int(profile.get('age')) < age-2 and not int(profile.get('user_id')) == interaction.user.id and not profile.get('paired') == True]
+        state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)
+        if not state:
+            return await interaction.followup.send(data)
+        profiles = data
 
         await interaction.followup.send(f"You have `{len(profiles)}` compatible profiles to match with")
 
@@ -98,19 +94,10 @@ class Matching(Cog):
         if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
         await interaction.response.defer()
         #get our data to compare against
-        data:dict = matching_db.find_one({'user_id':interaction.user.id})
-        if not data: return await interaction.followup.send("You have no profile! Create one using `/matching profile create`")
-        if not data.get('approved'): return await interaction.followup.send("You havent been approved! please wait for it to be approved/denied")
-
-        age =  int(data.get('age'))
-
-        user_ids = [member.id for member in interaction.guild.members]
-
-        profiles = [profile for profile in matching_db.find({'approved':True}) if profile.get('user_id') in user_ids and not int(profile.get('age')) > age+2 and not int(profile.get('age')) < age-2 and not int(profile.get('user_id')) == interaction.user.id and not profile.get('paired') == True]
-
-        if not profiles:
-            return await interaction.followup.send("their is no one for you to match with, sorry!")
-        
+        state, data = find_compatible_profiles(interaction.user.id, interaction.guild.members)
+        if not state:
+            return await interaction.followup.send(data)
+        profiles = data
          
 
 
@@ -125,7 +112,7 @@ class Matching(Cog):
         profile_embed.set_author(name=member.name, icon_url=member.avatar.url)
         profile_embed.set_footer(text=f"Profile Id: {resp_id}")
 
-        await interaction.followup.send(embed=profile_embed, view=MatchingView())
+        await interaction.followup.send(embed=profile_embed, view=MatchingView(user_id))
 
 
     

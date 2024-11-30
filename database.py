@@ -1,5 +1,6 @@
 # Database Features for the bot
 from pymongo import MongoClient
+from discord import Member
 
 client = MongoClient("mongodb://localhost:27017/")
 cupid = client.get_database("cupid")
@@ -21,3 +22,25 @@ def generate_profile_description(user_id:int):
     resp_id = str(data.get('_id')) if data else None
 
     return f"❥﹒Name: `{name}`\n❥﹒Pronouns: `{pronouns}`\n❥﹒Gender: `{gender}`\n❥﹒Age: `{age}`\n❥﹒Sexuality: `{sexuality}`\n❥﹒Bio:\n```{bio}```", resp_id
+
+
+
+def find_compatible_profiles(user_id:int, members:list[Member]):
+
+    data:dict = matching.find_one({'user_id':user_id})
+    if not data: return False, "You have no profile! Create one using `/matching profile create`"
+    if not data.get('approved'): return False, "You havent been approved! please wait for it to be approved/denied"
+
+    age =  int(data.get('age'))
+
+    user_ids = [member.id for member in members]
+
+    rejected_ids = data.get(['rejected_pairs'], [])
+
+    profiles = [profile for profile in matching.find({'approved':True}) if profile.get('user_id') in user_ids and not int(profile.get('age')) > age+2 and not int(profile.get('age')) < age-2 and not int(profile.get('user_id')) == user_id and not profile.get('paired') == True and not int(profile.get('user_id') in rejected_ids)]
+
+    if not profiles:
+        return False, "their is no one for you to match with, sorry!"
+    
+    
+    return True, profiles

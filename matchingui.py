@@ -192,15 +192,28 @@ class ProfileCreationView(View):
 # ---------------------------------------------------------------- ^^ profile stuff
 
 class MatchingView(View):
-    def __init__(self,):
+    def __init__(self,user_id):
+        self.user_id = user_id
         super().__init__(timeout=None)
 
     
     
     @button(label="Match", custom_id="matching_match",style=ButtonStyle.green)
     async def match(self, interaction:Interaction, button:Button):
+        await interaction.response.defer()
+        matching.update_one({"user_id":interaction.id}, {"$push":{"selected_pairs":self.user_id}}) # the people WE __want__ to match with
+        matching.update_many({"user_id":self.user_id}, {"$push":{"pairs":interaction.id}}) # the person we want to match with, and all the other ppl who wanted to match with em
+        data:dict = matching.find_one({"user_id":self.user_id})
+        if interaction.user in data.get('selected_pairs'): # match condition
+            # delete all selected and what not, give them the paired role, send rules and conditions in dms
+            await interaction.followup.send("congratulations! you guys matched! you are now paired! read dms!", ephemeral=True)
+
+            
+
         await interaction.response.send_message("This does nothing cus it isnt coded yet")
 
     @button(label="Reject", custom_id="matching_reject",style=ButtonStyle.red)
     async def reject(self, interaction:Interaction, button:Button):
-        await interaction.response.send_message("This does nothing cus it isnt coded yet")
+        matching.update_one({"user_id":interaction.id}, {"$push":{"rejected_pairs":self.user_id}}) # the people we DONT want to match with
+        # call itself again
+        

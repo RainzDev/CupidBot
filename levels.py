@@ -19,7 +19,7 @@ class Levels(Cog):
         # Refactor level rewards
         # Add an add / remove dict per level in the config file
         # on every message, check to see if the user has their level rewards, this is it get rid of the "fix" command
-        
+
 
     @Cog.listener('on_message')
     async def on_message(self, message:Message):
@@ -85,6 +85,39 @@ class Levels(Cog):
             await chan.send(f"Congratulations {message.author.mention}! You leveled up to `{level}`")
         
     
+    #@Cog.listener('on_message') # tagged out to not affect the bot
+    async def on_message_test(self, message:Message):
+        user = message.author
+        # check to see if we are not a bot and in a server, not dms
+        if user.bot: return
+        if not message.guild: return 
+
+        # collect config data and user data
+        config_data:dict = config.find_one({"server_id":message.guild.id})
+        user_data:dict = levels_data.find_one({"user_id":user.id})
+
+        # control variables
+        levelup = False
+        xp_multiplier = 1.75 if user.premium_since else 1 # boosters get 1.75x xp
+        level = user_data.get('level', 0)
+        xp = user_data.get('xp', 0)
+        xp_required = level*100 if level > 0 else 50
+
+        # stage the level up conditions
+
+        xp += int(random.randint(1,40) * xp_multiplier)
+        levelup = True if xp > xp_required else False
+        leftover = xp%xp_required
+
+        if levelup:
+            pass # work on this later
+
+
+
+        
+
+
+
     @command(description="View the level of yourself or another user")
     async def view_level(self, interaction:Interaction, member:Member=None, hidden:bool=False):
         await interaction.response.defer()

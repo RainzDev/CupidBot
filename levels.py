@@ -23,7 +23,7 @@ class Levels(Cog):
 
         # collect config data and user data
         config_data:dict = config.find_one({"server_id":message.guild.id})
-        user_data:dict = levels_data.find_one({"user_id":user.id})
+        user_data:dict = levels_data.find_one({"user_id":user.id}) or {}
 
         # control variables
         levelup = False
@@ -46,11 +46,11 @@ class Levels(Cog):
         # calculate rewards
         rewards_dict:dict = config_data.get('level_rewards')
         rewards_key = str(max((int(key) for key in rewards_dict if int(key) <= level), default=None))
-        rewards = rewards_dict.get(rewards_key)
+        rewards:dict = rewards_dict.get(rewards_key, {})
 
         
-        roles_to_add = set([message.guild.get_role(role_id) for role_id in rewards.get('add')])
-        roles_to_remove = set([message.guild.get_role(role_id) for role_id in rewards.get('remove')])
+        roles_to_add = set([message.guild.get_role(role_id) for role_id in rewards.get('add', [])])
+        roles_to_remove = set([message.guild.get_role(role_id) for role_id in rewards.get('remove', [])])
 
         user_roles = set(user.roles)
         new_roles = (user_roles - roles_to_remove) | roles_to_add

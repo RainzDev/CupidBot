@@ -166,14 +166,15 @@ class Matching(Cog):
 
     @profile.command(name="create")
     async def profile_create(self, interaction:Interaction):    
-        if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")   
+        if not interaction.guild: return await interaction.response.send_message("you have to use this in a guild!")
+        await interaction.response.defer(ephemeral=True)
 
         description, resp_id = generate_profile_description(interaction.user.id)
         profile_embed = Embed(title="Profile", description=description, color=0xffa1dc)
         profile_embed.set_author(name=interaction.user.name, icon_url=interaction.user.avatar.url)
         profile_embed.set_footer(text=f"Profile Id: {resp_id}")
 
-        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(), ephemeral=True)
+        await interaction.followup.send(embed=profile_embed, view=ProfileCreationView(), ephemeral=True)
     
     @profile.command(name="delete")
     async def profile_delete(self, interaction:Interaction):       

@@ -14,12 +14,12 @@ def generate_profile_description(user_id: int):
     if not data:
         return "Profile not found.", None
     
-    name = data['name']
-    age = data['age']
-    gender = data['gender']
-    pronouns = data['pronouns']
-    sexuality = data['sexuality']
-    bio = data['bio']
+    name = data.get('name')
+    age = data.get('age')
+    gender = data.get('gender')
+    pronouns = data.get('pronouns')
+    sexuality = data.get('sexuality')
+    bio = data.get('bio')
     resp_id = str(data['_id'])
 
     return f"❥﹒Name: `{name}`\n❥﹒Pronouns: `{pronouns}`\n❥﹒Gender: `{gender}`\n❥﹒Age: `{age}`\n❥﹒Sexuality: `{sexuality}`\n❥﹒Bio:\n```{bio}```", resp_id

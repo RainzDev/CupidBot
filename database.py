@@ -45,6 +45,7 @@ def find_compatible_profiles(user_id: int, members: list[Member]):
             or int(profile['age']) < age - 2
             or profile.get('paired') is True
             or profile['user_id'] in rejected_ids
+            or profile.get('user_id') in selected_ids
         ):
             continue
 

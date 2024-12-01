@@ -2,3 +2,4 @@ settings.py
 font
 imagegen.py
 __pycache__/
+output.png

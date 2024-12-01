@@ -14,7 +14,7 @@ class Levels(Cog):
         super().__init__()
     
     # event listener for level ups
-    @Cog.listener('on_message') # tagged out to not affect the bot
+    @Cog.listener('on_message')
     async def level_xp_gain(self, message:Message):
         user = message.author
         # check to see if we are not a bot and in a server, not dms

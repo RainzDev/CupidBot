@@ -36,34 +36,32 @@ class Config(Cog):
     )
     async def config_levels_reward(self, interaction:Interaction, level:int, roles_added:str=None, roles_removed:str=None):
         try:
-            roles_added_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_added.split(',')]
-            roles_removed_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_removed.split(',')]
+            roles_added_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_added.split(',')] if roles_added else []
+            roles_removed_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_removed.split(',')] if roles_removed else []
         except:
             return await interaction.response.send_message("An error occured! did you forget to put a , between roles?")
         
+        print(roles_removed_ids)
        
         config.update_one(
         {
             "server_id":interaction.guild_id
         },
         {
-            {
-                "$set":{
-                    {
-                        level:{
-                            "add":roles_added_ids,
-                            "remove":roles_removed_ids
-                        }
-                    }
-                }
+            "$set": {
+                f"level_rewards.{level}": 
+                {
+                    "add":roles_added_ids,
+                    "remove":roles_removed_ids
+                } 
             }
-        })
+        }, upsert=True)
 
         
-        roles_added_msg = ", ".join(interaction.guild.get_role(role).mention for role in roles_added_ids)
-        roles_removed_msg = ", ".join(interaction.guild.get_role(role).mention for role in roles_added_ids)
+        roles_added_msg = ", ".join(interaction.guild.get_role(role).mention for role in roles_added_ids) if roles_added_ids else None
+        roles_removed_msg = ", ".join(interaction.guild.get_role(role).mention for role in roles_removed_ids) if roles_removed_ids else None
 
-        update_embed = Embed(title='Level Rewards', description=f"I have updated the roles for level {level}!\n\n`+Added:` {roles_added_msg}\n`-Removed:` {roles_removed_msg}")
+        update_embed = Embed(title='Level Rewards', description=f"I have updated the roles for level `{level}`!\n\n`+Added:` {roles_added_msg}\n`-Removed:` {roles_removed_msg}")
         
         await interaction.response.send_message(embed=update_embed)
 

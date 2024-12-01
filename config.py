@@ -34,7 +34,7 @@ class Config(Cog):
         roles_added="a list of roles for this reward to acquire, must be seperated by a comma",
         roles_removed="a list of roles for this reward to remove, must be seperated by a comma"
     )
-    async def config_levels_reward(self, interaction:Interaction, level:int, roles_added:str, roles_removed:str):
+    async def config_levels_reward(self, interaction:Interaction, level:int, roles_added:str=None, roles_removed:str=None):
         try:
             roles_added_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_added.split(',')]
             roles_removed_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_removed.split(',')]

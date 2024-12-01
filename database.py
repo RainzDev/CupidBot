@@ -35,6 +35,7 @@ def find_compatible_profiles(user_id: int, members: list[Member]):
     selected_ids = data.get('selected_pairs', [])
 
     profiles = []
+    
 
     for profile in matching.find({'approved': True}):
         if (
@@ -46,7 +47,7 @@ def find_compatible_profiles(user_id: int, members: list[Member]):
             or profile['user_id'] in rejected_ids
         ):
             continue
-        
+
         profiles.append(profile)
 
     if not profiles:

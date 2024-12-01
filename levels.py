@@ -14,8 +14,16 @@ class Levels(Cog):
         super().__init__()
     
     # event listener for level ups
+
+    ### TODO
+        # Refactor level rewards
+        # Add an add / remove dict per level in the config file
+        # on every message, check to see if the user has their level rewards, this is it get rid of the "fix" command
+        
+
     @Cog.listener('on_message')
     async def on_message(self, message:Message):
+        
         if message.author.bot: return
         if not message.guild: return # if not sent in a guild, ignore
         config_data:dict = config.find_one({"server_id":message.guild.id})

@@ -31,7 +31,8 @@ class Config(Cog):
     @levels.command(name="reward", description="role rewards for certain level achivements")
     @describe(
         level="The level for this reward",
-        roles="a list of roles for this reward to acquire, must be seperated by a comma"
+        roles_added="a list of roles for this reward to acquire, must be seperated by a comma",
+        roles_removed="a list of roles for this reward to remove, must be seperated by a comma"
     )
     async def config_levels_reward(self, interaction:Interaction, level:int, roles_added:str, roles_removed:str):
         try:

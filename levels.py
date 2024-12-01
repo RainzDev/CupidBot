@@ -14,79 +14,8 @@ class Levels(Cog):
         super().__init__()
     
     # event listener for level ups
-
-    ### TODO
-        # Refactor level rewards
-        # Add an add / remove dict per level in the config file
-        # on every message, check to see if the user has their level rewards, this is it get rid of the "fix" command
-
-
-    @Cog.listener('on_message')
-    async def on_message(self, message:Message):
-        
-        if message.author.bot: return
-        if not message.guild: return # if not sent in a guild, ignore
-        config_data:dict = config.find_one({"server_id":message.guild.id})
-        data:dict = levels_data.find_one({"user_id":message.author.id})
-        levelup = False
-        if not data:
-            xp = 0
-            level = 1
-            #check for level 1 rewards
-            levelup = True
-
-            level_rewards:dict = config_data.get('level_roles', None)
-            rewards = level_rewards.get(str(level), None)
-            if rewards:
-                earned_roles = [message.guild.get_role(role_id) for role_id in rewards]
-                new_roles = list(set(message.author.roles) | set(earned_roles))
-                await message.author.edit(roles=new_roles)
-
-        else:
-            xp = data.get("xp")
-            level = data.get("level")
-        
-        xp_required = level*100
-        xp_mul = 1
-
-        if message.author.premium_since:
-            xp_mul = 1.15
-
-        xp+= int(random.randint(1,40) * xp_mul)
-        
-
-        if xp >= xp_required:
-            leftover = xp%xp_required
-            level +=1
-            xp = leftover
-            levelup = True
-
-            # check for role update
-            
-            level_rewards:dict = config_data.get('level_roles', None)
-            rewards = level_rewards.get(str(level), None)
-
-            if rewards:
-                earned_roles = [message.guild.get_role(role_id) for role_id in rewards]
-                new_roles = list(set(message.author.roles) | set(earned_roles))
-                await message.author.edit(roles=new_roles)
-
-
-        
-
-        levels_data.update_one({"user_id":message.author.id}, {"$set": {"xp":xp, "level":level}}, upsert=True)
-        if levelup:
-            data:dict = config.find_one({"server_id":message.guild.id})
-            chan_id = data.get("levelup_chan", None)
-            if chan_id:
-                chan = message.guild.get_channel(chan_id)
-            else:
-                chan = message.channel
-            await chan.send(f"Congratulations {message.author.mention}! You leveled up to `{level}`")
-        
-    
-    #@Cog.listener('on_message') # tagged out to not affect the bot
-    async def on_message_test(self, message:Message):
+    @Cog.listener('on_message') # tagged out to not affect the bot
+    async def level_xp_gain(self, message:Message):
         user = message.author
         # check to see if we are not a bot and in a server, not dms
         if user.bot: return
@@ -99,8 +28,8 @@ class Levels(Cog):
         # control variables
         levelup = False
         xp_multiplier = 1.75 if user.premium_since else 1 # boosters get 1.75x xp
-        level = user_data.get('level', 0)
-        xp = user_data.get('xp', 0)
+        level = int(user_data.get('level', 0))
+        xp = int(user_data.get('xp', 0))
         xp_required = level*100 if level > 0 else 50
 
         # stage the level up conditions
@@ -109,11 +38,36 @@ class Levels(Cog):
         levelup = True if xp > xp_required else False
         leftover = xp%xp_required
 
+        # increase xp and level on leve lup
         if levelup:
-            pass # work on this later
+            level +=1
+            xp = leftover
 
+        # calculate rewards
+        rewards_dict:dict = config_data.get('level_rewards')
+        rewards_key = str(max((int(key) for key in rewards_dict if int(key) <= level), default=None))
+        rewards = rewards_dict.get(rewards_key)
 
+        
+        roles_to_add = set([message.guild.get_role(role_id) for role_id in rewards.get('add')])
+        roles_to_remove = set([message.guild.get_role(role_id) for role_id in rewards.get('remove')])
 
+        user_roles = set(user.roles)
+        new_roles = (user_roles - roles_to_remove) | roles_to_add
+
+        
+
+        # add new roles to user
+        if new_roles != user_roles:
+            await user.edit(roles=new_roles)
+
+        # update the users level
+        levels_data.update_one({"user_id":message.author.id}, {"$set": {"xp":xp, "level":level}}, upsert=True)
+        
+        if levelup:
+            chan_id = config_data.get("levelup_chan", message.channel)
+            channel = message.guild.get_channel(chan_id)
+            await channel.send(f"Congratulations {message.author.mention}! You leveled up to `{level}`")
         
 
 
@@ -172,37 +126,4 @@ class Levels(Cog):
         levels_data.update_one({"user_id":member.id}, {"$set":{"level":level}}, upsert=True)
         await interaction.response.send_message(f"I have set {member.mention}'s level to `{level}`")
 
-    
-    @levels.command(name="fix", description="give yourself the roles you deserve")
-    async def level_fix(self, interaction:Interaction, member:Member=None):
-        await interaction.response.defer()
-        member = member if member else interaction.user
-
-        config_data:dict = config.find_one({"server_id":interaction.guild.id})
-        member_data = levels_data.find_one({'user_id':member.id})
-
-        
-        level_rewards:dict = config_data.get('level_roles', None)
-        closest_level = max(int(level) for level in level_rewards.keys() if int(level) <= member_data.get('level'))
-
-        print(closest_level)
-
-        rewards = level_rewards.get(str(closest_level))
-
-        if rewards:
-            earned_roles = [interaction.guild.get_role(role_id) for role_id in rewards]
-            new_roles = list(set(member.roles) | set(earned_roles))
-            await member.edit(roles=new_roles)
-        
-        await interaction.followup.send('Done!')
-    
-    
-
-        
-
-
-    
-    
-
-    
     

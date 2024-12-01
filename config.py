@@ -33,16 +33,36 @@ class Config(Cog):
         level="The level for this reward",
         roles="a list of roles for this reward to acquire, must be seperated by a comma"
     )
-    async def config_levels_reward(self, interaction:Interaction, level:int, roles:str):
+    async def config_levels_reward(self, interaction:Interaction, level:int, roles_added:str, roles_removed:str):
         try:
-            role_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles.split(',')]
+            roles_added_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_added.split(',')]
+            roles_removed_ids = [int(role.strip().strip('<@&').strip('>')) for role in roles_removed.split(',')]
         except:
             return await interaction.response.send_message("An error occured! did you forget to put a , between roles?")
         
-        config.update_one({"server_id":interaction.guild_id}, {"$set":{f"level_roles.{level}":role_ids}}, upsert=True)
+       
+        config.update_one(
+        {
+            "server_id":interaction.guild_id
+        },
+        {
+            {
+                "$set":{
+                    {
+                        level:{
+                            "add":roles_added_ids,
+                            "remove":roles_removed_ids
+                        }
+                    }
+                }
+            }
+        })
+
         
-        role_msg = ", ".join(interaction.guild.get_role(role).mention for role in role_ids)
-        update_embed = Embed(title='Level Rewards', description=f"I have updated the roles for level {level} to be:\n{role_msg}")
+        roles_added_msg = ", ".join(interaction.guild.get_role(role).mention for role in roles_added_ids)
+        roles_removed_msg = ", ".join(interaction.guild.get_role(role).mention for role in roles_added_ids)
+
+        update_embed = Embed(title='Level Rewards', description=f"I have updated the roles for level {level}!\n\n`+Added:` {roles_added_msg}\n`-Removed:` {roles_removed_msg}")
         
         await interaction.response.send_message(embed=update_embed)
 

@@ -8,6 +8,7 @@ from moderation import Moderation
 from config import Config
 from matching import Matching
 from roles import RoleView
+from welcome import Welcome
 
 class Bot(Bot):
     def __init__(self):
@@ -19,6 +20,7 @@ class Bot(Bot):
         await self.add_cog(Moderation())
         await self.add_cog(Config())
         await self.add_cog(Matching())
+        await self.add_cog(Welcome())
 
 
 

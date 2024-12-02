@@ -41,7 +41,6 @@ class Config(Cog):
         except:
             return await interaction.response.send_message("An error occured! did you forget to put a , between roles?")
         
-        print(roles_removed_ids)
        
         config.update_one(
         {

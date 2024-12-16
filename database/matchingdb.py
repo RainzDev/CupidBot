@@ -52,3 +52,46 @@ def generate_profile_embed(user:Member) -> Embed:
 
     return profile_embed
 
+
+
+def edit_profile(user:Member, data:dict, upsert:bool=False) -> None:
+    """
+    Edits the users provided data with the provided value
+
+    Parameters
+    ----------
+    user : discord.Member
+        the user of the profile you wish to edit
+    data : dict
+        the data you want to edit
+    upsert : str
+        weather or not to update the data AND insert or not
+
+    Returns
+    -------
+    None
+        returns None
+    """
+
+    MATCHING.update_one({'user_id':user.id}, data, upsert=upsert)
+
+    
+
+
+def get_profile(user:Member) -> dict | None:
+    """
+    gets a users profile
+
+    Parameters
+    ----------
+    user : discord.Member
+        the user of the profile you wish to edit
+    
+    Returns
+    -------
+    dict | None
+        returns a dict of the users profile data or None
+    """
+
+    data = MATCHING.find_one({'user_id':user.id}) or None
+    return data

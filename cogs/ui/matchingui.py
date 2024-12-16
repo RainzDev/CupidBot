@@ -22,7 +22,7 @@ class ProfileReasonModal(Modal):
         try:
             await user.send(f"Your profile was `{self.status}` for: `{self.reason.value}`")
         except:
-            interaction.followup.send("I can't dm the user!")
+            await interaction.followup.send("I can't dm the user!")
         
 
 class ProfileApprovalView(View):

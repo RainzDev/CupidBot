@@ -3,7 +3,7 @@ from discord import Embed, Member, Message, Interaction
 from discord.app_commands import command, Group, guild_only, describe, default_permissions
 from discord.ext.commands import Cog
 from database import matching as matching_db, generate_profile_description, find_compatible_profiles
-from matchingui import ProfileCreationView, MatchingView
+from cogs.ui.matchingui import ProfileCreationView, MatchingView
 
 import random
 
@@ -136,6 +136,8 @@ class Matching(Cog):
         await interaction.response.defer(ephemeral=True)
         
         our_data:dict = matching_db.find_one({'user_id':interaction.user.id})
+        if not our_data:
+            return await interaction.followup.send("You have no data! use `/matching profile create`")
 
         if our_data.get('paired'): 
             return await interaction.followup.send("You are already paired, you cant pair again! use `/matching unmatch` to unmatch from your partner!")

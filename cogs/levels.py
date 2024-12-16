@@ -1,7 +1,7 @@
 # Level Features for the bot
 from discord import Embed, Member, Message, Interaction, File
 from discord.app_commands import command, Group
-from discord.ext.commands import Cog
+from discord.ext.commands import Cog, is_owner
 from database import levels as levels_data, config
 
 from imagegen import generate_level, int_to_ordinal
@@ -116,6 +116,7 @@ class Levels(Cog):
 
     @levels.command(name="set_xp", description="sets a users xp")
     async def level_set_xp(self, interaction:Interaction, member:Member, xp:int):
+        if interaction.user.id != 1267552151454875751: return await interaction.response.send_message("Fuck you for trying casties")
         levels_data.update_one({"user_id":member.id}, {"$set":{"xp":xp}}, upsert=True)
         await interaction.response.send_message(f"I have set {member.mention}'s xp to `{xp}`")
     
@@ -123,6 +124,7 @@ class Levels(Cog):
 
     @levels.command(name="set_level", description="sets a users level")
     async def level_set_level(self, interaction:Interaction, member:Member, level:int):
+        if interaction.user.id != 1267552151454875751: return await interaction.response.send_message("Fuck you for trying casties")
         levels_data.update_one({"user_id":member.id}, {"$set":{"level":level}}, upsert=True)
         await interaction.response.send_message(f"I have set {member.mention}'s level to `{level}`")
 

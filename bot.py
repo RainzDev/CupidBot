@@ -3,12 +3,12 @@ from discord import Intents, Embed
 from settings import TOKEN
 
 #Cog Modules
-from levels import Levels
-from moderation import Moderation
-from config import Config
-from matching import Matching
-from roles import RoleView
-from welcome import Welcome
+from cogs.levels import Levels
+from cogs.moderation import Moderation
+from cogs.config import Config
+from cogs.matching import Matching
+from cogs.roles import RoleView
+from cogs.welcome import Welcome
 
 class Bot(Bot):
     def __init__(self):

@@ -30,6 +30,18 @@ class SubmissionView(View):
         try:
             await user.send("Your profile was approved! use `/matching match` to start matching with people")
         except: await interaction.followup.send(f"I cant Dm {user.mention}")
+        gender = profile.get('gender')
+        if gender == 'Male':
+            channel = interaction.guild.get_channel(1307474580008599663)
+        elif gender == 'Female':
+            channel = interaction.guild.get_channel(1307474598060883968)
+        else:
+            channel = interaction.guild.get_channel(1307480874119462952)
+        await channel.send(embed=profile_embed)
+
+            
+
+        
 
 
 

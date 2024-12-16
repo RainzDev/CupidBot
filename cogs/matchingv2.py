@@ -1,7 +1,7 @@
 from discord import Embed, Member, Interaction
 from discord.ext.commands import Cog
 from discord.app_commands import Group
-from database.matchingdb import test
+from database.matchingdb import generate_profile_embed
 
 class Matching(Cog):
     def __init__(self):
@@ -12,4 +12,4 @@ class Matching(Cog):
 
     @profile.command(name='create', description='a command to create a profile')
     async def matching_profile_create(self, interaction:Interaction):
-        await interaction.response.send_message('test')
+        await interaction.response.send_message(embed=generate_profile_embed(interaction.user))

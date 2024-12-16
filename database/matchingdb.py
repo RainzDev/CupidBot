@@ -1,9 +1,48 @@
-from discord import Embed, Member
+from discord import Embed, Member, Message
 from database.databasev2 import MATCHING, NoProfileException
+from time import time
+
+# puts the profile in a queue to be verifed
+def queue_profile(user:Member, message:Message) -> None:
+    """
+    Adds the users queue message to be verified
+    this stores their user_id and message_id for the profilesubmission buttons
+
+    Parameters
+    ----------
+    user : discord.Member
+        the user of the profile you wish to queue
+    message : discord.Message
+        the message for the id we want to store
+
+    Returns
+    -------
+    none
+        returns None
+    """
+    edit_profile(user, {"$set": {"approved":False, "message_id":message.id,"date":int(time())}})
+
+
+def qet_queued(message_id:int) -> dict | None:
+    """
+    gets the profile of a user if they are queued
+
+    Parameters
+    ----------
+    user : int
+        the message_id to get the queued data on
+
+    Returns
+    -------
+    dict | none
+        returns a dict of the users profile
+    """
+    data = MATCHING.find_one({'message_id':message_id}) or None
+    return data
 
 
 
-def generate_profile_embed(user:Member) -> Embed:
+def generate_profile_embed(user:Member, color:int=0xffa1dc) -> Embed:
     """
     Creates a discord.Embed using profile information from the provided user_id
 
@@ -11,6 +50,8 @@ def generate_profile_embed(user:Member) -> Embed:
     ----------
     user : discord.Member
         the user of the profile you wish to generate an embed of
+    color : int (base 16)
+        the color of the embed
 
     Returns
     -------
@@ -46,7 +87,7 @@ def generate_profile_embed(user:Member) -> Embed:
     profile_embed = Embed(
         title="Profile",
         description=description,
-        color=0xffa1dc)
+        color=color)
     profile_embed.set_footer(text=f'Profile Id: {resp_id}')
     profile_embed.set_author(name=user.global_name, icon_url=user.avatar.url)
 

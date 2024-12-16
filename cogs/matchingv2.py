@@ -30,10 +30,23 @@ class Matching(Cog):
         profile_data = get_profile(interaction.user)
         if not profile_data or not profile_data.get('tos_agreed'):
             return await interaction.response.send_message(embed=TOS, view=TosConfirmationView(interaction.user))
+        if profile_data.get('approved') == False or profile_data.get('approved'):
+            return await interaction.response.send_message("Your profile is already submitted and/or created~! use `/matching profile edit` to edit it!", ephemeral=True)
         
 
         profile_embed = generate_profile_embed(interaction.user)
 
-        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView())
+        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(), ephemeral=True)
+    
+
+    @profile.command(name='edit', description='a command to edit a profile')
+    async def matching_profile_create(self, interaction:Interaction):
+        profile_data = get_profile(interaction.user)
+        if not profile_data or not profile_data.get('tos_agreed'):
+            return await interaction.response.send_message("You haven't created a profile! use `/matching profile create`")
+        
+        profile_embed = generate_profile_embed(interaction.user)
+
+        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(True), ephemeral=True)
 
         

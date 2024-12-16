@@ -1,6 +1,7 @@
 from discord.ui import View, Button, button, Modal, TextInput, Select
 from discord import ButtonStyle, Member, Interaction, TextStyle, Embed, SelectOption
-from database.matchingdb import edit_profile, generate_profile_embed, get_profile
+from database.matchingdb import edit_profile, generate_profile_embed, get_profile, queue_profile
+from cogs.ui.submissionui import SubmissionView
 
 
 class TosConfirmationView(View):
@@ -97,16 +98,30 @@ class ProfileEditModal(Modal):
 
 
 class ProfileCreationView(View):
-    def __init__(self):
+    def __init__(self, editing=False):
         super().__init__(timeout=None)
         self.add_item(ProfileSexualitySelect())
         self.add_item(ProfileAgeSelect())
         self.add_item(ProfileGenderSelect())
+        self.edit = editing
+        if editing:
+            self.children[1].label = "Resubmit"
     
     @button(label="Edit Profile", style=ButtonStyle.gray)
     async def edit_profile(self, interaction:Interaction, button:Button):
         await interaction.response.send_modal(ProfileEditModal(interaction.user))
+
     
     @button(label="Submit Profile", style=ButtonStyle.green)
     async def submit_profile(self, interaction:Interaction, button:Button):
-        pass
+        # send profile to home server, and wait for verifcation
+        profile_embed = generate_profile_embed(interaction.user, color=0xfffacd)
+        profile_data = get_profile(interaction.user)
+        if profile_data.get('approved') == False and not self.edit:
+            return await interaction.response.send_message('Your profile was already submitted!', ephemeral=True)
+        verifcation_channel = interaction.guild.get_channel(1307474634559459360)
+        msg = await verifcation_channel.send("Waiting..")
+        await msg.edit(content="", embed=profile_embed, view=SubmissionView())
+        queue_profile(interaction.user, msg)
+        await interaction.response.send_message("Submitted!", ephemeral=True)
+

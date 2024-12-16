@@ -8,8 +8,6 @@ from cogs.ui.matchingui import ProfileCreationView, MatchingView
 import random
 
 
-
-
 class Matching(Cog):
     def __init__(self) -> None:
         super().__init__()

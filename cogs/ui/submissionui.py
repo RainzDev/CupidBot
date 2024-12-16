@@ -37,6 +37,8 @@ class SubmissionView(View):
             channel = interaction.guild.get_channel(1307474598060883968)
         else:
             channel = interaction.guild.get_channel(1307480874119462952)
+        
+        profile_embed = generate_profile_embed(user)
         await channel.send(embed=profile_embed)
 
             

@@ -1,8 +1,8 @@
 # Matchmaking features for the bot
-from discord import Embed, Member, Message, Interaction
+from discord import Embed, Member, Interaction
 from discord.app_commands import command, Group, guild_only, describe, default_permissions
 from discord.ext.commands import Cog
-from database import matching as matching_db, generate_profile_description, find_compatible_profiles
+from database.database import matching as matching_db, generate_profile_description, find_compatible_profiles
 from cogs.ui.matchingui import ProfileCreationView, MatchingView
 
 import random

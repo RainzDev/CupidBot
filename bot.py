@@ -6,7 +6,7 @@ from settings import TOKEN
 from cogs.levels import Levels
 from cogs.moderation import Moderation
 from cogs.config import Config
-from cogs.matching import Matching
+from cogs.matchingv2 import Matching
 from cogs.roles import RoleView
 from cogs.welcome import Welcome
 

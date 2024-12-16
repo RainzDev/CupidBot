@@ -2,7 +2,7 @@
 from discord import Embed, Member, Message, Interaction, File
 from discord.app_commands import command, Group
 from discord.ext.commands import Cog, is_owner
-from database import levels as levels_data, config
+from database.database import levels as levels_data, config
 
 from imagegen import generate_level, int_to_ordinal
 

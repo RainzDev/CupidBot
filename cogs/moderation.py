@@ -2,7 +2,7 @@
 from discord import Embed, Member, Message, Interaction
 from discord.app_commands import command, describe
 from discord.ext.commands import Cog
-from database import infractions
+from database.database import infractions
 import time
 
 class Moderation(Cog):

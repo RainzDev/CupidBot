@@ -2,7 +2,7 @@
 from discord import Embed, Member, Message, Interaction, TextChannel, Role
 from discord.app_commands import command, describe, Group
 from discord.ext.commands import Cog
-from database import config
+from database.database import config
 import time
 
 class Config(Cog):

@@ -2,7 +2,7 @@
 from discord import SelectOption
 from discord.utils import get
 from discord.ui import View, Select
-from database import infractions
+from database.database import infractions
 
 class RoleColorSelect(Select):
     def __init__(self):

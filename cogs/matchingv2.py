@@ -55,23 +55,21 @@ class Matching(Cog):
 
         await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(True), ephemeral=True)
 
+    @profile.command(name="view", description="view the profile of yourself or another user")
+    @describe(
+        member = "The member of the profile you want to see"
+    )
+    async def matching_profile_view(self, interaction:Interaction, member:Member=None):
+        member = member if member else interaction.user
+        await interaction.response.defer()
+        profile_embed = generate_profile_embed(member)
+        await interaction.followup.send(embed=profile_embed)
+
+
 
 
     # ^^^^^ ALL NEW DELETE EVERYTHING BELOW
 
-
-
-    @command(name="profile", description="Shows the profile of a member")
-    @describe(
-        member = "The member of the profile you want to see"
-    )
-    async def profile_command(self, interaction:Interaction, member:Member=None):
-        member = member if member else interaction.user
-        await interaction.response.defer()
-
-        profile_embed = generate_profile_embed(member)
-        await interaction.followup.send(embed=profile_embed)
-        
 
 
     

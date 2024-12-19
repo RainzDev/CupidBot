@@ -38,7 +38,7 @@ class ProfileGenderSelect(Select):
 
     async def callback(self, interaction:Interaction):
         edit_profile(interaction.user, {"$set":{"gender":self.values[0]}})
-        profile_embed = generate_profile_embed(interaction.user)
+        profile_embed = generate_profile_embed(user=interaction.user)
         await interaction.response.edit_message(embed=profile_embed)
 
 
@@ -51,7 +51,7 @@ class ProfileAgeSelect(Select):
 
     async def callback(self, interaction:Interaction):
         edit_profile(interaction.user, {"$set":{"age":self.values[0]}})
-        profile_embed = generate_profile_embed(interaction.user)
+        profile_embed = generate_profile_embed(user=interaction.user)
         await interaction.response.edit_message(embed=profile_embed)
         
 
@@ -68,7 +68,7 @@ class ProfileSexualitySelect(Select):
 
     async def callback(self, interaction:Interaction):
         edit_profile(interaction.user, {"$set":{"sexuality":self.values[0]}})
-        profile_embed = generate_profile_embed(interaction.user)
+        profile_embed = generate_profile_embed(user=interaction.user)
         await interaction.response.edit_message(embed=profile_embed)
 
 
@@ -91,7 +91,7 @@ class ProfileEditModal(Modal):
     async def on_submit(self, interaction:Interaction):
         edit_profile(interaction.user, {"$set":{"name":self.name.value,"pronouns":self.pronouns.value,"bio":self.bio.value}})
 
-        profile_embed = generate_profile_embed(interaction.user)
+        profile_embed = generate_profile_embed(user=interaction.user)
 
         await interaction.response.edit_message(embed=profile_embed)
 
@@ -115,7 +115,7 @@ class ProfileCreationView(View):
     @button(label="Submit Profile", style=ButtonStyle.green)
     async def submit_profile(self, interaction:Interaction, button:Button):
         # send profile to home server, and wait for verifcation
-        profile_embed = generate_profile_embed(interaction.user, color=0xfffacd)
+        profile_embed = generate_profile_embed(user=interaction.user, color=0xfffacd)
         profile_data = get_profile(interaction.user)
         status = profile_data.get('approved')
         if status == "Waiting" or status == False and not self.edit:

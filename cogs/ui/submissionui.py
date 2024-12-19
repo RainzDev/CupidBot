@@ -22,7 +22,7 @@ class SubmissionView(View):
         user_id = profile.get('user_id')
         user = interaction.guild.get_member(user_id)
         edit_profile(user, {"$set": {"approved":True}, "$unset": {"message_id":"","date":""}})
-        profile_embed = generate_profile_embed(user, color=0xb2f2bb)
+        profile_embed = generate_profile_embed(user=user, color=0xb2f2bb)
         profile_embed.add_field(name="Approved", value=f"Approved by: {interaction.user.mention}")
         self.children[0].disabled = True
         self.children[1].disabled = True
@@ -38,7 +38,7 @@ class SubmissionView(View):
         else:
             channel = interaction.guild.get_channel(1307480874119462952)
         
-        profile_embed = generate_profile_embed(user)
+        profile_embed = generate_profile_embed(user=user)
         await channel.send(embed=profile_embed)
 
             
@@ -61,7 +61,7 @@ class SubmissionView(View):
         user_id = profile.get('user_id')
         user = interaction.guild.get_member(user_id)
         edit_profile(user, {"$set": {"approved":False}, "$unset": {"message_id":"","date":""}})
-        profile_embed = generate_profile_embed(user, color=0xff8d8d)
+        profile_embed = generate_profile_embed(user=user, color=0xff8d8d)
         profile_embed.add_field(name="Denied", value=f"Denied by: {interaction.user.mention}")
         self.children[0].disabled = True
         self.children[1].disabled = True

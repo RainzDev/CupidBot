@@ -43,7 +43,7 @@ def qet_queued(message_id:int) -> dict | None:
 
 
 
-def generate_profile_embed(user:Member, color:int=0xffa1dc) -> Embed:
+def generate_profile_embed(*, user_id:int=None, user:Member=None, color:int=0xffa1dc) -> Embed:
     """
     Creates a discord.Embed using profile information from the provided user_id
 
@@ -61,7 +61,8 @@ def generate_profile_embed(user:Member, color:int=0xffa1dc) -> Embed:
     """
     
     # grabs profile data, checks if it exists, if not return exception
-    profile_data:dict = MATCHING.find_one({'user_id': user.id})
+    user_id = user.id if user else user_id
+    profile_data:dict = MATCHING.find_one({'user_id': user_id})
     if not profile_data:
         raise NoProfileException()
     
@@ -185,7 +186,7 @@ def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
 
 
 
-def get_compatible(user:Member, server_only=False) -> list[int] | None:
+def get_compatible(user:Member, server_only=False) -> list[dict] | None:
     """
     gets all the compatible users for our user
 

@@ -1,6 +1,7 @@
 from discord.ext.commands import Bot, is_owner, Context
-from discord import Intents, Embed
+from discord import Intents, Embed, Message
 from settings import TOKEN
+import asyncio
 
 #Cog Modules
 from cogs.levels import Levels

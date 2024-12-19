@@ -23,6 +23,7 @@ def queue_profile(user:Member, message:Message) -> None:
     edit_profile(user, {"$set": {"approved":"waiting", "message_id":message.id,"date":int(time())}})
 
 
+
 def qet_queued(message_id:int) -> dict | None:
     """
     gets the profile of a user if they are queued
@@ -115,7 +116,6 @@ def edit_profile(user:Member, data:dict, upsert:bool=False) -> None:
     """
 
     MATCHING.update_one({'user_id':user.id}, data, upsert=upsert)
-
     
 
 
@@ -136,3 +136,76 @@ def get_profile(user:Member) -> dict | None:
 
     data = MATCHING.find_one({'user_id':user.id}) or None
     return data
+
+
+
+def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
+    """
+    checks the compatibility of 2 users
+
+    compatibility params:
+    age is within 2 years of each other
+    profiles are both approved
+    profiles havent already selected each other
+
+    Parameters
+    ----------
+    user_a : int
+        the id of first user to check
+    user_b : discord.Member
+        the id of second user to check 
+    
+    Returns
+    -------
+    bool 
+        returns true if compatible, false if not
+    """
+
+    data_a:dict = MATCHING.find_one({'user_id': user_a_id})
+    data_b:dict = MATCHING.find_one({'user_id': user_b_id})
+
+    age_a = int(data_a.get('age', 0))
+    age_b = int(data_b.get('age', 100))
+
+    # if between 0-4 then we compatible
+    range = age_a + 2 - age_b
+
+
+    if (
+        data_a != data_b
+        and data_b.get('approved') == True
+        and data_a.get('approved') == True
+        and range >= 0 and range <=4
+        and data_a.get('user_id') not in data_b.get('selected_pairs', [])
+        and data_b.get('user_id') not in data_a.get('selected_pairs', [])
+    ):
+        return True
+    else:
+        return False
+
+
+
+def get_compatible(user:Member, server_only=False) -> list[int] | None:
+    """
+    gets all the compatible users for our user
+
+    Parameters
+    ----------
+    user : discord.Member
+        the user to generate the compatibility list
+    
+    Returns
+    -------
+    list[discord.Member] | False
+        returns a list of all discord.Members that are compatible, or false is current user isnt approved
+    """
+    user_data = get_profile(user)
+    if user_data.get('approved') != True: return None
+
+    profiles = []
+
+    for profile in MATCHING.find({'approved': True}):
+        if not compatibility_check(user.id, profile.get('user_id')): continue
+        profiles.append(profile)
+    
+    return profiles

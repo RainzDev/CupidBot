@@ -1,7 +1,7 @@
+from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible
+from discord.app_commands import Group, describe, default_permissions
 from discord import Embed, Member, Interaction
 from discord.ext.commands import Cog, command
-from discord.app_commands import Group, describe
-from database.matchingdb import generate_profile_embed, NoProfileException, get_profile
 from cogs.ui.profileui import TosConfirmationView, ProfileCreationView
 
 
@@ -93,20 +93,30 @@ class Matching(Cog):
                 await interaction.response.send_message("Staff hasnt gotten to approving your profile yet! please be paitent!", ephemeral=True)
             case _:
                 await interaction.response.send_message("Your profile hasnt been submitted! use `/matching profile create` to submit it!`", ephemeral=True)
-        
-            
-        
-
-
-
-
-        
 
 
 
     @matching.command(name="compatible", description="see all the compatiable profiles")
     async def compatible(self, interaction:Interaction, member:Member=None):
         if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        member = member if member else interaction.user
+        profiles = get_compatible(member)
+        await interaction.response.send_message(f'you have `{len(profiles)}` compatible profiles!')
+    
+
+
+    @matching.command(name="compatible_view", description="see all the compatiable profiles")
+    @default_permissions()
+    async def compatible(self, interaction:Interaction, member:Member=None):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('this command is reserved for the owner only. it will be hidden soon~ish', ephemeral=True)
+
+        member = member if member else interaction.user
+        profiles = get_compatible(member)
+        profile_string = "\n".join(f"{profile.get('name')} | `{profile.get('age')}`" for profile in profiles)
+        profiles_embed = Embed(title="All compatible profiles", description=profile_string, color=0xffa1dc)
+
+        await interaction.response.send_message(embed=profiles_embed)
+
         
 
 

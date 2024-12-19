@@ -29,6 +29,7 @@ class Matching(Cog):
 
     @profile.command(name='create', description='a command to create a profile')
     async def profile_create(self, interaction:Interaction):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
         if not profile_data or not profile_data.get('tos_agreed'):
             return await interaction.response.send_message(embed=TOS, view=TosConfirmationView(interaction.user), ephemeral=True)
@@ -43,6 +44,7 @@ class Matching(Cog):
 
     @profile.command(name='edit', description='a command to edit a profile')
     async def profile_edit(self, interaction:Interaction):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
         if not profile_data or not profile_data.get('tos_agreed'):
             return await interaction.response.send_message("You haven't created a profile! use `/matching profile create`")
@@ -58,6 +60,7 @@ class Matching(Cog):
         member = "The member of the profile you want to see"
     )
     async def matching_profile_view(self, interaction:Interaction, member:Member=None):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
         await interaction.response.defer()
         profile_embed = generate_profile_embed(member)
@@ -67,7 +70,7 @@ class Matching(Cog):
 
     @profile.command(name="delete")
     async def profile_delete(self, interaction:Interaction):
-        pass
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
     
 
 
@@ -76,7 +79,9 @@ class Matching(Cog):
         member = "The member of the profile's status you want to see"
     )
     async def profile_status(self, interaction:Interaction, member:Member=None):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
+
 
 
         
@@ -85,29 +90,34 @@ class Matching(Cog):
 
     @matching.command(name="compatible", description="see all the compatiable profiles")
     async def compatible(self, interaction:Interaction, member:Member=None):
-        pass
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        
 
 
 
     @matching.command(name="unmatch", description="unmatch yourself from your pair")
     async def unmatch(self, interaction:Interaction):
-        pass
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        
 
 
 
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
-        pass
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        
 
     
 
     @profile.command(name="delete")
     async def profile_delete(self, interaction:Interaction):
-        pass
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        
     
 
 
     @profile.command(name="status",description="See the status of your profile")
-    async def profile_status(self, interaction:Interaction):       
-        pass
+    async def profile_status(self, interaction:Interaction):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)       
+        
         

@@ -81,6 +81,22 @@ class Matching(Cog):
     async def profile_status(self, interaction:Interaction, member:Member=None):
         if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
+        profile_data = get_profile(member)
+        status = profile_data.get('approved')
+
+        match status:
+            case True:
+                await interaction.response.send_message("Your profile is already approved! feel free to use `/matching match`",ephemeral=True)
+            case False:
+                await interaction.response.send_message("Your profile is not approved! please edit and resubmit your profile via `/matching profile edit`", ephemeral=True)
+            case 'waiting':
+                await interaction.response.send_message("Staff hasnt gotten to approving your profile yet! please be paitent!", ephemeral=True)
+            case _:
+                await interaction.response.send_message("Your profile hasnt been submitted! use `/matching profile create` to submit it!`", ephemeral=True)
+        
+            
+        
+
 
 
 
@@ -105,19 +121,4 @@ class Matching(Cog):
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
         if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
-        
-
-    
-
-    @profile.command(name="delete")
-    async def profile_delete(self, interaction:Interaction):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
-        
-    
-
-
-    @profile.command(name="status",description="See the status of your profile")
-    async def profile_status(self, interaction:Interaction):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)       
-        
         

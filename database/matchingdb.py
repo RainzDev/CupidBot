@@ -20,7 +20,7 @@ def queue_profile(user:Member, message:Message) -> None:
     none
         returns None
     """
-    edit_profile(user, {"$set": {"approved":False, "message_id":message.id,"date":int(time())}})
+    edit_profile(user, {"$set": {"approved":"waiting", "message_id":message.id,"date":int(time())}})
 
 
 def qet_queued(message_id:int) -> dict | None:

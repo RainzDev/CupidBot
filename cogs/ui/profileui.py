@@ -117,7 +117,8 @@ class ProfileCreationView(View):
         # send profile to home server, and wait for verifcation
         profile_embed = generate_profile_embed(interaction.user, color=0xfffacd)
         profile_data = get_profile(interaction.user)
-        if profile_data.get('approved') == False and not self.edit:
+        status = profile_data.get('approved')
+        if status == "Waiting" or status == False and not self.edit:
             return await interaction.response.send_message('Your profile was already submitted!', ephemeral=True)
         verifcation_channel = interaction.guild.get_channel(1307474634559459360)
         msg = await verifcation_channel.send("Waiting..")

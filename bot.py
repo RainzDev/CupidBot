@@ -20,7 +20,7 @@ class Bot(Bot):
         await self.add_cog(Levels())
         await self.add_cog(Moderation())
         await self.add_cog(Config())
-        await self.add_cog(Matching())
+        await self.add_cog(Matching(self))
         await self.add_cog(Welcome())
 
 

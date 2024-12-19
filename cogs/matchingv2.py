@@ -126,12 +126,15 @@ class Matching(Cog):
     async def match(self, interaction:Interaction):
         if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
-        if profile_data.get('status') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`")
+        if profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
 
         # get a random profile
         profiles = get_compatible(interaction.user)
         random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
+
+
+        user = self.bot.get_user(random_profile.get('user_id'))
         
-        generate_profile_embed(user_id=random_profile.get('user_id'))
-        await interaction.response.send_message(generate_profile_embed)
+        random_profile_embed = generate_profile_embed(user=user)
+        await interaction.response.send_message(embed=random_profile_embed)
         

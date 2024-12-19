@@ -1,4 +1,4 @@
-from discord import Embed, Member, Message
+from discord import Embed, Member, Message, User
 from database.databasev2 import MATCHING, NoProfileException
 from time import time
 
@@ -43,13 +43,13 @@ def qet_queued(message_id:int) -> dict | None:
 
 
 
-def generate_profile_embed(*, user_id:int=None, user:Member=None, color:int=0xffa1dc) -> Embed:
+def generate_profile_embed(*, user_id:int=None, user:User=None, color:int=0xffa1dc) -> Embed:
     """
     Creates a discord.Embed using profile information from the provided user_id
 
     Parameters
     ----------
-    user : discord.Member
+    user : discord.User
         the user of the profile you wish to generate an embed of
     color : int (base 16)
         the color of the embed
@@ -77,7 +77,7 @@ def generate_profile_embed(*, user_id:int=None, user:Member=None, color:int=0xff
 
     # self explainitory
     description = f"""
-    ❥﹒User: {user.mention}
+    ❥﹒User: {user.mention} | `{user.global_name}`
     ❥﹒Name: `{name}`
     ❥﹒Pronouns: `{pronouns}`
     ❥﹒Gender: `{gender}`

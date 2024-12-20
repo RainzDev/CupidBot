@@ -1,4 +1,4 @@
-from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible
+from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible, fetch_random_user
 from discord.app_commands import Group, describe, default_permissions
 from discord import Embed, Member, Interaction
 from discord.ext.commands import Cog, command, Bot
@@ -33,7 +33,6 @@ class Matching(Cog):
 
     @profile.command(name='create', description='a command to create a profile')
     async def profile_create(self, interaction:Interaction):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
         if not profile_data or not profile_data.get('tos_agreed'):
             return await interaction.response.send_message(embed=TOS, view=TosConfirmationView(interaction.user), ephemeral=True)
@@ -48,7 +47,6 @@ class Matching(Cog):
 
     @profile.command(name='edit', description='a command to edit a profile')
     async def profile_edit(self, interaction:Interaction):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
         if not profile_data or not profile_data.get('tos_agreed'):
             return await interaction.response.send_message("You haven't created a profile! use `/matching profile create`")
@@ -64,7 +62,6 @@ class Matching(Cog):
         member = "The member of the profile you want to see"
     )
     async def matching_profile_view(self, interaction:Interaction, member:Member=None):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
         await interaction.response.defer()
         profile_embed = generate_profile_embed(user=member)
@@ -83,7 +80,6 @@ class Matching(Cog):
         member = "The member of the profile's status you want to see"
     )
     async def profile_status(self, interaction:Interaction, member:Member=None):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
         profile_data = get_profile(member)
         status = profile_data.get('approved')
@@ -121,15 +117,6 @@ class Matching(Cog):
 
         await interaction.response.send_message(embed=profiles_embed)
 
-    # recursive, will purge users who left the scope of the bot
-    # TODO ^^^^
-    def fetch_random_user(self, users):
-        random_profile:dict = users[random.randint(0, len(users)-1)]
-        user = self.bot.get_user(int(random_profile.get('user_id')))
-        if user == None:
-            return self.fetch_random_user(users=users)
-        return user
-
 
 
     @matching.command(name="match", description="match with people and find a pair!")
@@ -141,11 +128,7 @@ class Matching(Cog):
         # get a random profile
         profiles = get_compatible(interaction.user)
         
-        user = self.fetch_random_user(profiles) # gets a user we can see
-        
-        
-            
-        
+        user = fetch_random_user(self.bot, profiles) # gets a user we can see
         random_profile_embed = generate_profile_embed(user=user)
-        await interaction.response.send_message(embed=random_profile_embed, view=SwipeView())
+        await interaction.response.send_message(embed=random_profile_embed, view=SwipeView(user, self.bot), ephemeral=True)
     

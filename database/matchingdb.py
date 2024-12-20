@@ -148,6 +148,7 @@ def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
     age is within 2 years of each other
     profiles are both approved
     profiles havent already selected each other
+    we havent already selected them
 
     Parameters
     ----------
@@ -179,6 +180,7 @@ def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
         and range >= 0 and range <=4
         and data_a.get('user_id') not in data_b.get('selected_pairs', [])
         and data_b.get('user_id') not in data_a.get('selected_pairs', [])
+        
     ):
         return True
     else:
@@ -210,3 +212,15 @@ def get_compatible(user:Member, server_only=False) -> list[dict] | None:
         profiles.append(profile)
     
     return profiles
+
+
+import random
+
+# recursive, will purge users who left the scope of the bot
+# TODO ^^^^
+def fetch_random_user(bot, users:list):
+    random_profile:dict = users[random.randint(0, len(users)-1)]
+    user = bot.get_user(int(random_profile.get('user_id')))
+    if user == None:
+        return fetch_random_user(bot, users=users)
+    return user

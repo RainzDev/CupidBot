@@ -42,7 +42,7 @@ class Matching(Cog):
 
         profile_embed = generate_profile_embed(user=interaction.user)
 
-        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(), ephemeral=True)
+        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(self.bot), ephemeral=True)
     
 
     @profile.command(name='edit', description='a command to edit a profile')
@@ -53,7 +53,7 @@ class Matching(Cog):
         
         profile_embed = generate_profile_embed(user=interaction.user)
 
-        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(True), ephemeral=True)
+        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(self.bot, True), ephemeral=True)
 
 
 

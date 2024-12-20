@@ -2,6 +2,7 @@ from discord.ui import View, Button, button, Modal, TextInput, Select
 from discord import ButtonStyle, Member, Interaction, TextStyle, Embed, SelectOption
 from database.matchingdb import edit_profile, generate_profile_embed, get_profile, queue_profile
 from cogs.ui.submissionui import SubmissionView
+from discord.ext.commands import Bot
 
 
 class TosConfirmationView(View):
@@ -98,12 +99,13 @@ class ProfileEditModal(Modal):
 
 
 class ProfileCreationView(View):
-    def __init__(self, editing=False):
+    def __init__(self, bot:Bot, editing=False):
         super().__init__(timeout=None)
         self.add_item(ProfileSexualitySelect())
         self.add_item(ProfileAgeSelect())
         self.add_item(ProfileGenderSelect())
         self.edit = editing
+        self.bot:Bot = bot
         if editing:
             self.children[1].label = "Resubmit"
     
@@ -120,7 +122,8 @@ class ProfileCreationView(View):
         status = profile_data.get('approved')
         if status == "Waiting" or status == False and not self.edit:
             return await interaction.response.send_message('Your profile was already submitted!', ephemeral=True)
-        verifcation_channel = interaction.guild.get_channel(1307474634559459360)
+        guild = self.bot.get_guild(1282801630575595572)
+        verifcation_channel = guild.get_channel(1307474634559459360)
         msg = await verifcation_channel.send("Waiting..")
         await msg.edit(content="", embed=profile_embed, view=SubmissionView())
         queue_profile(interaction.user, msg)

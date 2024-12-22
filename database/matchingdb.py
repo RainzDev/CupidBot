@@ -148,7 +148,6 @@ def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
     age is within 2 years of each other
     profiles are both approved
     profiles havent already selected each other
-    we havent already selected them
 
     Parameters
     ----------

@@ -14,10 +14,11 @@ class SubmissionView(View):
 
     @button(label="Approve", style=ButtonStyle.green)
     async def approve(self, interaction:Interaction, button:Button):
+        await interaction.response.defer()
         profile = qet_queued(interaction.message.id)
         if not profile:
             await interaction.delete_original_response()
-            await interaction.response.send_message("Looks like the profile is no longer in queue!")
+            await interaction.followup.send("Looks like the profile is no longer in queue!")
             return
         user_id = profile.get('user_id')
         user = interaction.guild.get_member(user_id)
@@ -26,7 +27,7 @@ class SubmissionView(View):
         profile_embed.add_field(name="Approved", value=f"Approved by: {interaction.user.mention}")
         self.children[0].disabled = True
         self.children[1].disabled = True
-        await interaction.response.edit_message(embed=profile_embed, view=self)
+        await interaction.edit_original_response(embed=profile_embed, view=self)
         try:
             await user.send("Your profile was approved! use `/matching match` to start matching with people")
         except: await interaction.followup.send(f"I cant Dm {user.mention}")

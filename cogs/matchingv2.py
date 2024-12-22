@@ -107,7 +107,7 @@ class Matching(Cog):
 
     @matching.command(name="compatible_view", description="see all the compatiable profiles")
     @default_permissions()
-    async def compatible(self, interaction:Interaction, member:Member=None):
+    async def compatible_view(self, interaction:Interaction, member:Member=None):
         if interaction.user.id != 1267552151454875751: await interaction.response.send_message('this command is reserved for the owner only. it will be hidden soon~ish', ephemeral=True)
 
         member = member if member else interaction.user
@@ -121,14 +121,20 @@ class Matching(Cog):
 
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+
+        if interaction.user.id != 1267552151454875751: return await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
         if profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
-
         # get a random profile
         profiles = get_compatible(interaction.user)
         
-        user = fetch_random_user(self.bot, profiles) # gets a user we can see
+
+        try:
+            user = fetch_random_user(self.bot, profiles) # gets a user we can see
+        except RecursionError:
+            return await interaction.response.send_message("You are out of people to match with!", ephemeral=True)
+
+
         random_profile_embed = generate_profile_embed(user=user)
         await interaction.response.send_message(embed=random_profile_embed, view=SwipeView(user, self.bot), ephemeral=True)
     

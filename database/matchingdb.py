@@ -176,7 +176,8 @@ def compatibility_check(user_a_id:int, user_b_id:int, ignore_selected:bool=False
             data_a != data_b
             and data_b.get('approved') == True
             and data_a.get('approved') == True
-            and range >= 0 and range <=4       
+            and range >= 0 and range <=4   
+            and data_b.get('user_id') not in data_a.get('rejected_pairs')   
         ):
             return True
         else:
@@ -190,7 +191,7 @@ def compatibility_check(user_a_id:int, user_b_id:int, ignore_selected:bool=False
         and range >= 0 and range <=4
         and data_a.get('user_id') not in data_b.get('selected_pairs', [])
         and data_b.get('user_id') not in data_a.get('selected_pairs', [])
-        
+        and data_b.get('user_id') not in data_a.get('rejected_pairs')
     ):
         return True
     else:

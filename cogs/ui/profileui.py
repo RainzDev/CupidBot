@@ -15,14 +15,14 @@ class TosConfirmationView(View):
     @button(label="Confirm",custom_id="confirm_tos_button", style = ButtonStyle.green)
     async def tos_confirm(self, interaction:Interaction, button:Button):
         if self.responded:
-            return await interaction.response.send_message("You already responded to this!")
+            return await interaction.response.send_message("You already responded to this!", ephemeral=True)
         if interaction.user != self.user:
             return await interaction.response.send_message("Only the original user can respond to this tos agreement!", ephemeral=True)
             
         
         self.responded = True
         edit_profile(interaction.user, {"$set": {"tos_agreed":True}}, True)
-        await interaction.response.send_message("Done! Feel free to re-run the command")
+        await interaction.response.send_message("Done! Feel free to re-run the command", ephemeral=True)
 
 
 # TODO

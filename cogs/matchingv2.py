@@ -1,4 +1,4 @@
-from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible, fetch_random_user
+from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible, MATCHING, edit_profile
 from discord.app_commands import Group, describe, default_permissions
 from discord import Embed, Member, Interaction
 from discord.ext.commands import Cog, command, Bot
@@ -130,8 +130,23 @@ class Matching(Cog):
         random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
         user = self.bot.get_user(random_profile.get('user_id'))
         if not user:
-            return await interaction.followup.send("the user i tried to pull has left the scope of the bot! rerun `/matching match`", ephemeral=True)
+            return await interaction.response.send_message("the user i tried to pull has left the scope of the bot! rerun `/matching match`", ephemeral=True)
 
         random_profile_embed = generate_profile_embed(user=user)
         await interaction.response.send_message(embed=random_profile_embed, view=SwipeView(user, self.bot), ephemeral=True)
     
+    @matching.command(name="purge", description="purge all the people you swiped right or left on")
+    async def matching_purge(self, interaction:Interaction):
+        await interaction.response.defer()
+        profile_data = get_profile(interaction.user)
+        selected_pairs = profile_data.get('selected_pairs', [])
+
+        result = MATCHING.update_many(
+            {'user_id': {'$in': selected_pairs}},
+            {'$pull': {'paired_with_us': interaction.user.id}}
+        )
+
+        edit_profile(interaction.user, {"$set": {"selected_pairs": []}})
+        edit_profile(interaction.user, {"$set": {"rejected_pairs": []}})
+
+        await interaction.followup.send(f"I have removed `{result.matched_count}`!")

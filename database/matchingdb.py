@@ -140,7 +140,7 @@ def get_profile(user:Member) -> dict | None:
 
 
 
-def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
+def compatibility_check(user_a_id:int, user_b_id:int, ignore_selected:bool=False) -> bool:
     """
     checks the compatibility of 2 users
 
@@ -171,6 +171,17 @@ def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
     # if between 0-4 then we compatible
     range = age_a + 2 - age_b
 
+    if ignore_selected:
+        if (
+            data_a != data_b
+            and data_b.get('approved') == True
+            and data_a.get('approved') == True
+            and range >= 0 and range <=4       
+        ):
+            return True
+        else:
+            return False
+        
 
     if (
         data_a != data_b
@@ -187,7 +198,7 @@ def compatibility_check(user_a_id:int, user_b_id:int) -> bool:
 
 
 
-def get_compatible(user:Member, server_only=False) -> list[dict] | None:
+def get_compatible(user:Member, server_only=False, ignore_selected=False) -> list[dict] | None:
     """
     gets all the compatible users for our user
 
@@ -207,7 +218,7 @@ def get_compatible(user:Member, server_only=False) -> list[dict] | None:
     profiles = []
 
     for profile in MATCHING.find({'approved': True}):
-        if not compatibility_check(user.id, profile.get('user_id')): continue
+        if not compatibility_check(user.id, profile.get('user_id'), ignore_selected=ignore_selected): continue
         profiles.append(profile)
     
     return profiles
@@ -218,6 +229,8 @@ import random
 # recursive, will purge users who left the scope of the bot
 # TODO ^^^^
 def fetch_random_user(bot, users:list):
+    if len(users) == 0:
+        raise Exception("List cant be empty")
     random_profile:dict = users[random.randint(0, len(users)-1)]
     user = bot.get_user(int(random_profile.get('user_id')))
     if user == None:

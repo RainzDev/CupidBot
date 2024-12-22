@@ -1,5 +1,5 @@
 from discord.ext.commands import Bot, is_owner, Context
-from discord import Intents, Embed, Message
+from discord import Intents, Embed, Message, Member
 from settings import TOKEN
 import asyncio
 
@@ -10,6 +10,8 @@ from cogs.config import Config
 from cogs.matchingv2 import Matching
 from cogs.roles import RoleView
 from cogs.welcome import Welcome
+
+from database.matchingdb import MATCHING
 
 class Bot(Bot):
     def __init__(self):
@@ -54,6 +56,40 @@ async def send_roles(ctx:Context):
 
     role_embed = Embed(title='Color Roles', description=description, color=0xffa1dc)
     await ctx.send(embed=role_embed, view=RoleView())
+
+
+@bot.command()
+@is_owner()
+async def purge_profiles(ctx:Context):
+    members:list[Member] = bot.get_all_members()
+    profiles = MATCHING.find()
+    member_ids = [member.id for member in members]
+    profile_ids = [profile.get('user_id', 0) for profile in profiles if profile.get('user_id', 0) not in member_ids]
+    
+    
+    
+    result = MATCHING.delete_many({"user_id": {"$in":profile_ids}})
+
+    await ctx.send(f"Deleted {result.deleted_count} profiles!")
+    
+
+from collections import Counter
+
+
+@bot.command()
+@is_owner()
+async def duplicate_check(ctx:Context, user_id:int):
+    profile:dict = MATCHING.find_one({"user_id":860433184252231691})
+    rejected = profile.get('rejected_pairs', [])
+
+    counts = Counter(rejected)
+
+
+    duplicates = {item: count for item, count in counts.items() if count > 1}
+    total_duplicates = sum(count - 1 for count in duplicates.values())
+    await ctx.send(total_duplicates)
+
+
 
 
 @bot.command()

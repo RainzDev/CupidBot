@@ -98,17 +98,18 @@ class Matching(Cog):
 
     @matching.command(name="compatible", description="see all the compatiable profiles")
     async def compatible(self, interaction:Interaction, member:Member=None):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
         profiles = get_compatible(member)
-        await interaction.response.send_message(f'you have `{len(profiles)}` compatible profiles!')
+        ignore_selected = get_compatible(member, ignore_selected=True)
+        total = (len(ignore_selected))
+        await interaction.response.send_message(f'you have `{len(profiles)}` compatible profiles out of the possible `{total}`, this means you already swiped on `{total-len(profiles)}` profiles!')
     
 
 
     @matching.command(name="compatible_view", description="see all the compatiable profiles")
     @default_permissions()
     async def compatible_view(self, interaction:Interaction, member:Member=None):
-        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('this command is reserved for the owner only. it will be hidden soon~ish', ephemeral=True)
+        if interaction.user.id != 1267552151454875751: return await interaction.response.send_message('this command is reserved for the owner only. it will be hidden soon~ish', ephemeral=True)
 
         member = member if member else interaction.user
         profiles = get_compatible(member)

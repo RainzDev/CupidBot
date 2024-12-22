@@ -12,7 +12,7 @@ class SubmissionView(View):
         
     
 
-    @button(label="Approve", style=ButtonStyle.green)
+    @button(label="Approve", style=ButtonStyle.green, custom_id="approved_id")
     async def approve(self, interaction:Interaction, button:Button):
         await interaction.response.defer()
         profile = qet_queued(interaction.message.id)
@@ -52,7 +52,7 @@ class SubmissionView(View):
         
 
 
-    @button(label="Deny", style=ButtonStyle.red)
+    @button(label="Deny", style=ButtonStyle.red, custom_id="deny_id")
     async def deny(self, interaction:Interaction, button:Button):
         profile = qet_queued(interaction.message.id)
         if not profile:

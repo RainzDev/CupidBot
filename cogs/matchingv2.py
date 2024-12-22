@@ -2,6 +2,7 @@ from database.matchingdb import generate_profile_embed, NoProfileException, get_
 from discord.app_commands import Group, describe, default_permissions
 from discord import Embed, Member, Interaction
 from discord.ext.commands import Cog, command, Bot
+from discord.ext import tasks
 from cogs.ui.profileui import TosConfirmationView, ProfileCreationView
 from cogs.ui.matchingui import SwipeView
 
@@ -27,6 +28,16 @@ class Matching(Cog):
     def __init__(self, bot:Bot):
         super().__init__()
         self.bot:Bot = bot
+        self.purge_left.start()
+
+    @tasks.loop(hours=1)
+    async def purge_left(self):
+        members:list[Member] = self.bot.get_all_members()
+        profiles = MATCHING.find()
+        member_ids = [member.id for member in members]
+        profile_ids = [profile.get('user_id', 0) for profile in profiles if profile.get('user_id', 0) not in member_ids]
+        MATCHING.delete_many({"user_id": {"$in":profile_ids}})
+
 
     matching = Group(name="matching", description="A group of commands for match making")
     profile = Group(name="profile", description="a subgroup of profile based commands", parent=matching)
@@ -64,7 +75,10 @@ class Matching(Cog):
     async def matching_profile_view(self, interaction:Interaction, member:Member=None):
         member = member if member else interaction.user
         await interaction.response.defer()
-        profile_embed = generate_profile_embed(user=member)
+        try:
+            profile_embed = generate_profile_embed(user=member)
+        except NoProfileException:
+            return await interaction.followup.send("You have no profile!")
         await interaction.followup.send(embed=profile_embed)
 
 
@@ -82,6 +96,7 @@ class Matching(Cog):
     async def profile_status(self, interaction:Interaction, member:Member=None):
         member = member if member else interaction.user
         profile_data = get_profile(member)
+        if not profile_data: return await interaction.response.send_message("You have no profile, try `/matching profile create`")
         status = profile_data.get('approved')
 
         match status:
@@ -123,7 +138,7 @@ class Matching(Cog):
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
         profile_data = get_profile(interaction.user)
-        if profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
+        if not profile_data or profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
 
         profiles = get_compatible(interaction.user)
         if len(profiles) == 0: return await interaction.response.send_message("You are out of profiles to match with!", ephemeral=True)

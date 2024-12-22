@@ -10,6 +10,7 @@ from cogs.config import Config
 from cogs.matchingv2 import Matching
 from cogs.roles import RoleView
 from cogs.welcome import Welcome
+from cogs.ui.submissionui import SubmissionView
 
 from database.matchingdb import MATCHING
 
@@ -19,6 +20,7 @@ class Bot(Bot):
 
     async def setup_hook(self) -> None:
         self.add_view(RoleView())
+        self.add_view(SubmissionView())
         await self.add_cog(Levels())
         await self.add_cog(Moderation())
         await self.add_cog(Config())
@@ -65,9 +67,6 @@ async def purge_profiles(ctx:Context):
     profiles = MATCHING.find()
     member_ids = [member.id for member in members]
     profile_ids = [profile.get('user_id', 0) for profile in profiles if profile.get('user_id', 0) not in member_ids]
-    
-    
-    
     result = MATCHING.delete_many({"user_id": {"$in":profile_ids}})
 
     await ctx.send(f"Deleted {result.deleted_count} profiles!")

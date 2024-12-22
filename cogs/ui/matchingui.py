@@ -18,7 +18,7 @@ class SwipeView(View):
         edit_profile(interaction.user, {'$push': {'rejected_pairs': self.user.id}}) # reject, queue up a new profile
 
         profiles = get_compatible(interaction.user)
-        if len(profiles) == 0: return await interaction.response.send_message("You are out of profiles to match with!", ephemeral=True)
+        if len(profiles) == 0: return await interaction.followup.send("You are out of profiles to match with!", ephemeral=True)
         random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
         user = self.bot.get_user(random_profile.get('user_id'))
         if not user:
@@ -48,7 +48,7 @@ class SwipeView(View):
 
 
         profiles = get_compatible(interaction.user)
-        if len(profiles) == 0: return await interaction.response.send_message("You are out of profiles to match with!", ephemeral=True)
+        if len(profiles) == 0: return await interaction.followup.send("You are out of profiles to match with!", ephemeral=True)
         random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
         user = self.bot.get_user(random_profile.get('user_id'))
         if not user:

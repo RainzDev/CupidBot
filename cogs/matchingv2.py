@@ -122,7 +122,6 @@ class Matching(Cog):
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
 
-        if interaction.user.id != 1267552151454875751: return await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         profile_data = get_profile(interaction.user)
         if profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
         # get a random profile

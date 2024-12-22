@@ -1,6 +1,8 @@
 from discord.ui import Select, View, Modal, TextInput, button, DynamicItem
 from discord import Button, ButtonStyle, Interaction, TextStyle, Embed, SelectOption, User
-from database.matchingdb import edit_profile, fetch_random_user, generate_profile_embed, get_compatible, get_profile
+from discord.ext.commands import Bot
+from database.matchingdb import edit_profile, generate_profile_embed, get_compatible, get_profile
+import random
 from asyncio import sleep
 
 
@@ -8,19 +10,23 @@ class SwipeView(View):
     def __init__(self, user:User, bot):
         super().__init__(timeout=None)
         self.user = user
-        self.bot = bot
+        self.bot:Bot = bot
     
     @button(label='Swipe Left', emoji="⬅️")
     async def swipe_left(self, interaction:Interaction, button:Button):
+        await interaction.response.defer()
         edit_profile(interaction.user, {'$push': {'rejected_pairs': self.user.id}}) # reject, queue up a new profile
 
         profiles = get_compatible(interaction.user)
-        try:
-            user = fetch_random_user(self.bot, profiles) # gets a user we can see
-        except RecursionError:
-            return await interaction.response.send_message("You are out of people to match with!", ephemeral=True)
+        random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
+        user = self.bot.get_user(random_profile.get('user_id'))
+        if not user:
+            return await interaction.followup.send("the user i tried to pull has left the scope of the bot! rerun `/matching match`", ephemeral=True)
+        
         random_profile_embed = generate_profile_embed(user=user)
-        await interaction.response.edit_message(embed=random_profile_embed, view=SwipeView(user, self.bot))
+
+
+        await interaction.edit_original_response(embed=random_profile_embed, view=SwipeView(user, self.bot))
         
     
     @button(label='Swipe Right', emoji="➡️")
@@ -40,13 +46,11 @@ class SwipeView(View):
             await sleep(3)
 
 
-
         profiles = get_compatible(interaction.user)
-
-        try:
-            user = fetch_random_user(self.bot, profiles) # gets a user we can see
-        except RecursionError:
-            return await interaction.response.send_message("You are out of people to match with!", ephemeral=True)
+        random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
+        user = self.bot.get_user(random_profile.get('user_id'))
+        if not user:
+            return await interaction.followup.send("the user i tried to pull has left the scope of the bot! rerun `/matching match`", ephemeral=True)
 
 
         random_profile_embed = generate_profile_embed(user=user)

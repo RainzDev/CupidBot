@@ -224,15 +224,3 @@ def get_compatible(user:Member, server_only=False, ignore_selected=False) -> lis
     return profiles
 
 
-import random
-
-# recursive, will purge users who left the scope of the bot
-# TODO ^^^^
-def fetch_random_user(bot, users:list):
-    if len(users) == 0:
-        raise Exception("List cant be empty")
-    random_profile:dict = users[random.randint(0, len(users)-1)]
-    user = bot.get_user(int(random_profile.get('user_id')))
-    if user == None:
-        return fetch_random_user(bot, users=users)
-    return user

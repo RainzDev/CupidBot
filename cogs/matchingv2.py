@@ -29,15 +29,7 @@ class Matching(Cog):
         super().__init__()
         self.bot:Bot = bot
         self.purge_left.start()
-
-    @tasks.loop(hours=1)
-    async def purge_left(self):
-        members:list[Member] = self.bot.get_all_members()
-        profiles = MATCHING.find()
-        member_ids = [member.id for member in members]
-        profile_ids = [profile.get('user_id', 0) for profile in profiles if profile.get('user_id', 0) not in member_ids]
-        MATCHING.delete_many({"user_id": {"$in":profile_ids}})
-
+    
 
     matching = Group(name="matching", description="A group of commands for match making")
     profile = Group(name="profile", description="a subgroup of profile based commands", parent=matching)
@@ -114,8 +106,14 @@ class Matching(Cog):
     @matching.command(name="compatible", description="see all the compatiable profiles")
     async def compatible(self, interaction:Interaction, member:Member=None):
         member = member if member else interaction.user
+        profile:dict = get_profile(member)
+        if not profile:
+            return await interaction.response.send_message("I couldnt find your profile!")
+        
         profiles = get_compatible(member)
         ignore_selected = get_compatible(member, ignore_selected=True)
+        if get_compatible == None:
+            return await interaction.response.send_message("Couldn't find any compatible profiles! or your profile isnt approved/ not found")
         total = (len(ignore_selected))
         await interaction.response.send_message(f'you have `{len(profiles)}` compatible profiles out of the possible `{total}`, this means you already swiped on `{total-len(profiles)}` profiles!')
     

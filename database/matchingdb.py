@@ -214,7 +214,7 @@ def get_compatible(user:Member, server_only=False, ignore_selected=False) -> lis
         returns a list of all discord.Members that are compatible, or false is current user isnt approved
     """
     user_data = get_profile(user)
-    if not user_data or user_data.get('approved') != True: return None
+    if not user_data or user_data.get('approved') != True: return []
 
     profiles = []
 

@@ -122,18 +122,15 @@ class Matching(Cog):
 
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
-
         profile_data = get_profile(interaction.user)
         if profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
-        # get a random profile
+
         profiles = get_compatible(interaction.user)
-        
-
-        try:
-            user = fetch_random_user(self.bot, profiles) # gets a user we can see
-        except RecursionError:
-            return await interaction.response.send_message("You are out of people to match with!", ephemeral=True)
-
+        if len(profiles) == 0: return await interaction.response.send_message("You are out of profiles to match with!", ephemeral=True)
+        random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
+        user = self.bot.get_user(random_profile.get('user_id'))
+        if not user:
+            return await interaction.followup.send("the user i tried to pull has left the scope of the bot! rerun `/matching match`", ephemeral=True)
 
         random_profile_embed = generate_profile_embed(user=user)
         await interaction.response.send_message(embed=random_profile_embed, view=SwipeView(user, self.bot), ephemeral=True)

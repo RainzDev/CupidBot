@@ -15,6 +15,7 @@ class SwipeView(View):
     @button(label='Swipe Left', emoji="⬅️")
     async def swipe_left(self, interaction:Interaction, button:Button):
         await interaction.response.defer()
+        
         profile = get_profile(interaction.user, self.bot)
         profile.edit({'$push': {'rejected_pairs': self.user.id}})
         

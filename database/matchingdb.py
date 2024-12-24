@@ -35,7 +35,15 @@ class Profile():
         self.data:dict = data
     
     def __call__(self):
-        return get_compatible(self.user)[:10]
+        profiles = []
+
+        for profile in get_compatible(self.user):
+            try:
+                get_profile(profile.get('user_id'), self.bot)
+                profiles.append(profile)
+            except UserNotFoundException:
+                continue
+        return profiles[:10]
 
     def fetch_data(self):
         return MATCHING.find_one({'_id':self._id})

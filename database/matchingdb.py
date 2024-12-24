@@ -3,6 +3,8 @@ from discord.ext.commands import Bot
 from database.databasev2 import MATCHING, NoProfileException
 from time import time
 
+from typing import List
+
 # puts the profile in a queue to be verifed
 
 class UserNotFoundException(BaseException):
@@ -31,6 +33,9 @@ class Profile():
         self.paired_with_us = data.get('paired_with_us', [])
         self.tos = data.get('tos_agreed')
         self.data:dict = data
+    
+    def __call__(self):
+        return get_compatible(self.user.id)
 
     def fetch_data(self):
         return MATCHING.find_one({'_id':self._id})

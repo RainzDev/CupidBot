@@ -1,7 +1,7 @@
 from discord.ui import Select, View, Modal, TextInput, button, DynamicItem
 from discord import Button, ButtonStyle, Interaction, TextStyle, Embed, SelectOption, User
 from discord.ext.commands import Bot
-from database.matchingdb import edit_profile, generate_profile_embed, get_compatible, get_profile
+from database.matchingdb import get_compatible, get_profile
 import random
 from asyncio import sleep
 
@@ -15,7 +15,9 @@ class SwipeView(View):
     @button(label='Swipe Left', emoji="⬅️")
     async def swipe_left(self, interaction:Interaction, button:Button):
         await interaction.response.defer()
-        edit_profile(interaction.user, {'$push': {'rejected_pairs': self.user.id}}) # reject, queue up a new profile
+        profile = get_profile(interaction.user, self.bot)
+        profile.edit({'$push': {'rejected_pairs': self.user.id}})
+        
 
         profiles = get_compatible(interaction.user)
         if len(profiles) == 0: return await interaction.followup.send("You are out of profiles to match with!", ephemeral=True)

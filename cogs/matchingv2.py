@@ -1,4 +1,4 @@
-from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible, MATCHING, edit_profile
+from database.matchingdb import NoProfileException, UserNotFoundException, get_profile, get_compatible, MATCHING
 from discord.app_commands import Group, describe, default_permissions
 from discord import Embed, Member, Interaction, TextChannel
 from discord.ext.commands import Cog, command, Bot
@@ -38,27 +38,27 @@ class Matching(Cog):
 
     @profile.command(name='create', description='a command to create a profile')
     async def profile_create(self, interaction:Interaction):
-        profile_data = get_profile(interaction.user)
-        if not profile_data or not profile_data.get('tos_agreed'):
-            return await interaction.response.send_message(embed=TOS, view=TosConfirmationView(interaction.user), ephemeral=True)
-        if profile_data.get('approved') == False or profile_data.get('approved'):
+        try:
+            profile = get_profile(interaction.user, self.bot)
+        except NoProfileException:
+            return await interaction.response.send_message(embed=TOS, view=TosConfirmationView(interaction.user, self.bot), ephemeral=True)
+        if not profile.tos:
+            return await interaction.response.send_message(embed=TOS, view=TosConfirmationView(interaction.user, self.bot), ephemeral=True)
+            
+        if profile.approved == False or profile.approved:
             return await interaction.response.send_message("Your profile is already submitted and/or created~! use `/matching profile edit` to edit it!", ephemeral=True)
         
-
-        profile_embed = generate_profile_embed(user=interaction.user)
-
-        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(self.bot), ephemeral=True)
+        await interaction.response.send_message(embed=profile.generate_embed(), view=ProfileCreationView(self.bot), ephemeral=True)
     
 
     @profile.command(name='edit', description='a command to edit a profile')
     async def profile_edit(self, interaction:Interaction):
-        profile_data = get_profile(interaction.user)
-        if not profile_data or not profile_data.get('tos_agreed'):
+        try:
+            profile = get_profile(interaction.user, self.bot)
+        except NoProfileException:
             return await interaction.response.send_message("You haven't created a profile! use `/matching profile create`")
         
-        profile_embed = generate_profile_embed(user=interaction.user)
-
-        await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(self.bot, True), ephemeral=True)
+        await interaction.response.send_message(embed=profile.generate_embed(), view=ProfileCreationView(self.bot, True), ephemeral=True)
 
 
 
@@ -83,10 +83,10 @@ class Matching(Cog):
         member = member if member else interaction.user
         await interaction.response.defer()
         try:
-            profile_embed = generate_profile_embed(user=member)
-        except NoProfileException:
-            return await interaction.followup.send("You have no profile!")
-        await interaction.followup.send(embed=profile_embed)
+            profile = get_profile(interaction.user, self.bot)
+        except UserNotFoundException: return await interaction.followup.send("The user for the profile was not found! the user is out of scope of the bot")
+        except NoProfileException: return await interaction.followup.send(f"{member.mention} does not have a profile!")
+        await interaction.followup.send(embed=profile.generate_embed())
 
 
 
@@ -101,6 +101,7 @@ class Matching(Cog):
         member = "The member of the profile's status you want to see"
     )
     async def profile_status(self, interaction:Interaction, member:Member=None):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
         profile_data = get_profile(member)
         if not profile_data: return await interaction.response.send_message("You have no profile, try `/matching profile create`")
@@ -120,6 +121,7 @@ class Matching(Cog):
 
     @matching.command(name="compatible", description="see all the compatiable profiles")
     async def compatible(self, interaction:Interaction, member:Member=None):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         member = member if member else interaction.user
         profile:dict = get_profile(member)
         if not profile:
@@ -150,31 +152,36 @@ class Matching(Cog):
 
     @matching.command(name="match", description="match with people and find a pair!")
     async def match(self, interaction:Interaction):
-        profile_data = get_profile(interaction.user)
-        if not profile_data or profile_data.get('approved') != True: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        try:
+            our_profile = get_profile(interaction.user, self.bot)
+        except NoProfileException: return await interaction.response.send_message("You have no profile! make one with `/matching profile create`", ephemeral=True)
+        if not our_profile.approved: return await interaction.response.send_message("You cant match until you are approved, see `/matching profile status`", ephemeral=True)
 
         profiles = get_compatible(interaction.user)
         if len(profiles) == 0: return await interaction.response.send_message("You are out of profiles to match with!", ephemeral=True)
+        # TODO Make get random profile a function that returns a profile object
         random_profile:dict = profiles[random.randint(0, len(profiles)-1)]
-        user = self.bot.get_user(random_profile.get('user_id'))
-        if not user:
-            return await interaction.response.send_message("the user i tried to pull has left the scope of the bot! rerun `/matching match`", ephemeral=True)
 
-        random_profile_embed = generate_profile_embed(user=user)
-        await interaction.response.send_message(embed=random_profile_embed, view=SwipeView(user, self.bot), ephemeral=True)
+        user = self.bot.get_user(random_profile.get('user_id'))
+        try:
+            generated_profile = get_profile(user, self.bot)
+        except UserNotFoundException: return await interaction.response.send_message("An error occured! `UserNotFoundException`, try again!")
+
+        await interaction.response.send_message(embed=generated_profile.generate_embed(), view=SwipeView(user, self.bot), ephemeral=True)
     
     @matching.command(name="purge", description="purge all the people you swiped right or left on")
     async def matching_purge(self, interaction:Interaction):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
         await interaction.response.defer()
-        profile_data = get_profile(interaction.user)
-        selected_pairs = profile_data.get('selected_pairs', [])
+        profile = get_profile(interaction.user, self.bot)
+        
 
         result = MATCHING.update_many(
-            {'user_id': {'$in': selected_pairs}},
+            {'user_id': {'$in': profile.selected_pairs}},
             {'$pull': {'paired_with_us': interaction.user.id}}
         )
 
-        edit_profile(interaction.user, {"$set": {"selected_pairs": []}})
-        edit_profile(interaction.user, {"$set": {"rejected_pairs": []}})
-
+        profile.edit({"$set": {"selected_pairs": [], "rejected_pairs": []}})
+        
         await interaction.followup.send(f"I have removed `{result.matched_count}`!")

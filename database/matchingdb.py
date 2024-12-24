@@ -18,19 +18,25 @@ class Profile():
         self.id = data.get('user_id')
         self.user = bot.get_user(self.id)
         if not self.user: raise UserNotFoundException()
-        self.name = data.get('Name')
-        self.pronouns = data.get('Pronouns')
-        self.gender = data.get('Gender')
-        self.age = data.get('Age')
-        self.sexuality = data.get('Sexuality')
-        self.bio = data.get('Bio')
+        self.name:str = data.get('name')
+        self.pronouns:str = data.get('pronouns')
+        self.gender:str = data.get('gender')
+        self.age:int = data.get('age')
+        self.sexuality:str = data.get('sexuality')
+        self.bio:str = data.get('bio')
         self._id = data.get('_id')
+        self.approved:bool = data.get('approved')
+        self.selected_pairs = data.get('selected_pairs', [])
+        self.rejected_pairs = data.get('rejected_pairs', [])
+        self.paired_with_us = data.get('paired_with_us', [])
+        self.tos = data.get('tos_agreed')
+        self.data:dict = data
 
     def fetch_data(self):
         return MATCHING.find_one({'_id':self._id})
 
-    def edit(self, data):
-        result = MATCHING.update_one({'_id':self._id}, data)
+    def edit(self, data, upsert=False):
+        result = MATCHING.update_one({'_id':self._id}, data, upsert=upsert)
         return result
     
     def generate_embed(self, color=0xffa1dc):
@@ -52,35 +58,16 @@ class Profile():
         profile_embed.set_author(name=self.user.global_name, icon_url=self.user.avatar.url)
 
         return profile_embed
+    
+    def queue_profile(self, message_id:int):
+        return self.edit({"$set": {"approved":"waiting", "message_id":message_id,"date":int(time())}})
+        
         
 
-    
-    
 
 
 
-def queue_profile(user:Member, message:Message) -> None:
-    """
-    Adds the users queue message to be verified
-    this stores their user_id and message_id for the profilesubmission buttons
-
-    Parameters
-    ----------
-    user : discord.Member
-        the user of the profile you wish to queue
-    message : discord.Message
-        the message for the id we want to store
-
-    Returns
-    -------
-    none
-        returns None
-    """
-    edit_profile(user, {"$set": {"approved":"waiting", "message_id":message.id,"date":int(time())}})
-
-
-
-def qet_queued(message_id:int) -> dict | None:
+def qet_queued(message_id:int, bot) -> Profile:
     """
     gets the profile of a user if they are queued
 
@@ -95,88 +82,12 @@ def qet_queued(message_id:int) -> dict | None:
         returns a dict of the users profile
     """
     data = MATCHING.find_one({'message_id':message_id}) or None
-    return data
+    return Profile(bot, data)
 
 
 
-def generate_profile_embed(*, user_id:int=None, user:User=None, color:int=0xffa1dc) -> Embed:
-    """
-    Creates a discord.Embed using profile information from the provided user_id
 
-    Parameters
-    ----------
-    user : discord.User
-        the user of the profile you wish to generate an embed of
-    color : int (base 16)
-        the color of the embed
-
-    Returns
-    -------
-    discord.Embed
-        returns a discord.Embed using the provided user_id to generate a description an embed
-    """
-    
-    # grabs profile data, checks if it exists, if not return exception
-    user_id = user.id if user else user_id
-    profile_data:dict = MATCHING.find_one({'user_id': user_id})
-    if not profile_data:
-        raise NoProfileException()
-    
-    # grab the profile data store it in vars
-    name = profile_data.get('name')
-    age = profile_data.get('age')
-    gender = profile_data.get('gender')
-    pronouns = profile_data.get('pronouns')
-    sexuality = profile_data.get('sexuality')
-    bio = profile_data.get('bio')
-    resp_id = str(profile_data['_id'])
-
-    # self explainitory
-    description = f"""
-    ❥﹒User: {user.mention} | `{user.global_name}`
-    ❥﹒Name: `{name}`
-    ❥﹒Pronouns: `{pronouns}`
-    ❥﹒Gender: `{gender}`
-    ❥﹒Age: `{age}`
-    ❥﹒Sexuality: `{sexuality}`
-    ❥﹒Bio:\n```{bio}```
-    """
-    # creates the profile embed
-    profile_embed = Embed(
-        title="Profile",
-        description=description,
-        color=color)
-    profile_embed.set_footer(text=f'Profile Id: {resp_id}')
-    profile_embed.set_author(name=user.global_name, icon_url=user.avatar.url)
-
-    return profile_embed
-
-
-
-def edit_profile(user:Member, data:dict, upsert:bool=False) -> None:
-    """
-    Edits the users provided data with the provided value
-
-    Parameters
-    ----------
-    user : discord.Member
-        the user of the profile you wish to edit
-    data : dict
-        the data you want to edit
-    upsert : str
-        weather or not to update the data AND insert or not
-
-    Returns
-    -------
-    None
-        returns None
-    """
-
-    MATCHING.update_one({'user_id':user.id}, data, upsert=upsert)
-    
-
-
-def get_profile(user:Member) -> dict | None:
+def get_profile(user:Member, bot:Bot) -> Profile:
     """
     gets a users profile
 
@@ -190,12 +101,16 @@ def get_profile(user:Member) -> dict | None:
     dict | None
         returns a dict of the users profile data or None
     """
-
+    if not user:
+        raise UserNotFoundException()
     data = MATCHING.find_one({'user_id':user.id}) or None
-    return data
+    return Profile(bot, data)
 
 
 
+
+# TODO
+### MAKE THESE PART OF PROFILE
 def compatibility_check(user_a_id:int, user_b_id:int, ignore_selected:bool=False) -> bool:
     """
     checks the compatibility of 2 users

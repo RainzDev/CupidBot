@@ -1,14 +1,14 @@
 from discord.ui import View, Button, button, Modal, TextInput, Select
 from discord import ButtonStyle, Member, Interaction, TextStyle, Embed, SelectOption
-from database.matchingdb import edit_profile, generate_profile_embed, get_profile, queue_profile
+from database.matchingdb import get_profile
 from cogs.ui.submissionui import SubmissionView
 from discord.ext.commands import Bot
 
 
 class TosConfirmationView(View):
-    def __init__(self, user:Member):
-        self.user = user
+    def __init__(self, user:Member, bot:Bot):
         self.responded = False
+        self.bot = bot
         super().__init__(timeout=180)
 
     
@@ -16,19 +16,18 @@ class TosConfirmationView(View):
     async def tos_confirm(self, interaction:Interaction, button:Button):
         if self.responded:
             return await interaction.response.send_message("You already responded to this!", ephemeral=True)
-        if interaction.user != self.user:
-            return await interaction.response.send_message("Only the original user can respond to this tos agreement!", ephemeral=True)
-            
         
         self.responded = True
-        edit_profile(interaction.user, {"$set": {"tos_agreed":True}}, True)
+        profile = get_profile(interaction.user, self.bot)
+        profile.edit({"$set": {"tos_agreed":True}}, True)
         await interaction.response.send_message("Done! Feel free to re-run the command", ephemeral=True)
 
 
 # TODO
 ## 1.)  move to 1 select menu with custom name and stuff, just take in options as kwarg
 class ProfileGenderSelect(Select):
-    def __init__(self):
+    def __init__(self, bot:Bot):
+        self.bot = bot
         options = [
             SelectOption(label="Male"),
             SelectOption(label="Female"),
@@ -38,26 +37,28 @@ class ProfileGenderSelect(Select):
 
 
     async def callback(self, interaction:Interaction):
-        edit_profile(interaction.user, {"$set":{"gender":self.values[0]}})
-        profile_embed = generate_profile_embed(user=interaction.user)
-        await interaction.response.edit_message(embed=profile_embed)
+        profile = get_profile(interaction.user, self.bot)
+        profile.edit({"$set":{"gender":self.values[0]}})
+        await interaction.response.edit_message(embed=profile.generate_embed())
 
 
 class ProfileAgeSelect(Select):
-    def __init__(self):
+    def __init__(self, bot:Bot):
+        self.bot = bot
         options = [SelectOption(label=f"{age}") for age in range(13,24)]
         options.append(SelectOption(label="25+"))
         super().__init__(custom_id="profile_age", placeholder="Select Your Age", min_values=1, max_values=1, options=options)
 
 
     async def callback(self, interaction:Interaction):
-        edit_profile(interaction.user, {"$set":{"age":self.values[0]}})
-        profile_embed = generate_profile_embed(user=interaction.user)
-        await interaction.response.edit_message(embed=profile_embed)
+        profile = get_profile(interaction.user, self.bot)
+        profile.edit({"$set":{"age":self.values[0]}})
+        await interaction.response.edit_message(embed=profile.generate_embed())
         
 
 class ProfileSexualitySelect(Select):
-    def __init__(self):
+    def __init__(self, bot:Bot):
+        self.bot = bot
         options = [
             SelectOption(label="Heterosexual"),
             SelectOption(label="Homosexual"),
@@ -68,14 +69,15 @@ class ProfileSexualitySelect(Select):
 
 
     async def callback(self, interaction:Interaction):
-        edit_profile(interaction.user, {"$set":{"sexuality":self.values[0]}})
-        profile_embed = generate_profile_embed(user=interaction.user)
-        await interaction.response.edit_message(embed=profile_embed)
+        profile = get_profile(interaction.user, self.bot)
+        profile.edit({"$set":{"sexuality":self.values[0]}})
+        await interaction.response.edit_message(embed=profile.generate_embed())
 
 
 
 class ProfileEditModal(Modal):
-    def __init__(self, user:Member):
+    def __init__(self, user:Member, bot:Bot):
+        self.bot = bot
         super().__init__(title="Edit Profile", timeout=None, custom_id="edit_profile_modal")
         profile_data:dict = get_profile(user)
         if profile_data:
@@ -90,20 +92,20 @@ class ProfileEditModal(Modal):
     bio = TextInput(label="Bio", style=TextStyle.paragraph)
 
     async def on_submit(self, interaction:Interaction):
-        edit_profile(interaction.user, {"$set":{"name":self.name.value,"pronouns":self.pronouns.value,"bio":self.bio.value}})
 
-        profile_embed = generate_profile_embed(user=interaction.user)
+        profile = get_profile(interaction.user, self.bot)
+        profile.edit({"$set":{"name":self.name.value,"pronouns":self.pronouns.value,"bio":self.bio.value}})
 
-        await interaction.response.edit_message(embed=profile_embed)
+        await interaction.response.edit_message(embed=profile.generate_embed())
 
 
 
 class ProfileCreationView(View):
     def __init__(self, bot:Bot, editing=False):
         super().__init__(timeout=None)
-        self.add_item(ProfileSexualitySelect())
-        self.add_item(ProfileAgeSelect())
-        self.add_item(ProfileGenderSelect())
+        self.add_item(ProfileSexualitySelect(bot))
+        self.add_item(ProfileAgeSelect(bot))
+        self.add_item(ProfileGenderSelect(bot))
         self.edit = editing
         self.bot:Bot = bot
         if editing:
@@ -117,15 +119,16 @@ class ProfileCreationView(View):
     @button(label="Submit Profile", style=ButtonStyle.green)
     async def submit_profile(self, interaction:Interaction, button:Button):
         # send profile to home server, and wait for verifcation
-        profile_embed = generate_profile_embed(user=interaction.user, color=0xfffacd)
-        profile_data = get_profile(interaction.user)
-        status = profile_data.get('approved')
-        if status == "Waiting" or status == False and not self.edit:
+        profile = get_profile(interaction.user, self.bot)
+        
+        if profile.approved == "Waiting" or profile.approved == False and not self.edit:
             return await interaction.response.send_message('Your profile was already submitted!', ephemeral=True)
+        
         guild = self.bot.get_guild(1282801630575595572)
         verifcation_channel = guild.get_channel(1307474634559459360)
         msg = await verifcation_channel.send("Waiting..")
-        await msg.edit(content="", embed=profile_embed, view=SubmissionView())
-        queue_profile(interaction.user, msg)
+        
+        await msg.edit(content="", embed=profile.generate_embed(), view=SubmissionView(self.bot))
+        profile.queue_profile(msg.id)
         await interaction.response.send_message("Submitted!", ephemeral=True)
 

@@ -35,7 +35,7 @@ class Profile():
         self.data:dict = data
     
     def __call__(self):
-        return get_compatible(self.user.id)[:10]
+        return get_compatible(self.user)[:10]
 
     def fetch_data(self):
         return MATCHING.find_one({'_id':self._id})

@@ -1,6 +1,6 @@
 from database.matchingdb import generate_profile_embed, NoProfileException, get_profile, get_compatible, MATCHING, edit_profile
 from discord.app_commands import Group, describe, default_permissions
-from discord import Embed, Member, Interaction
+from discord import Embed, Member, Interaction, TextChannel
 from discord.ext.commands import Cog, command, Bot
 from discord.ext import tasks
 from cogs.ui.profileui import TosConfirmationView, ProfileCreationView
@@ -28,8 +28,10 @@ class Matching(Cog):
     def __init__(self, bot:Bot):
         super().__init__()
         self.bot:Bot = bot
-        self.purge_left.start()
+
+
     
+
 
     matching = Group(name="matching", description="A group of commands for match making")
     profile = Group(name="profile", description="a subgroup of profile based commands", parent=matching)
@@ -57,6 +59,19 @@ class Matching(Cog):
         profile_embed = generate_profile_embed(user=interaction.user)
 
         await interaction.response.send_message(embed=profile_embed, view=ProfileCreationView(self.bot, True), ephemeral=True)
+
+
+
+    @profile.command(name='load', description="loads your profile from a message")
+    @describe(channel="The channel where the message is stored",message_id = 'the message id of the embed that has your profile')
+    async def profile_load(self, interaction:Interaction, channel:TextChannel, message_id:str):
+        if interaction.user.id != 1267552151454875751: await interaction.response.send_message('command still under construction! check back later', ephemeral=True)
+        message = await channel.fetch_message(int(message_id))
+        factored_desc = message.embeds[0].description.replace("❥﹒", '').replace(':', '').replace("Name", '').replace("Pronouns", '').replace("Name", '').replace("Gender", '').replace("Age", '').replace("Sexuality", '').replace("Bio", '').replace('User', '').replace('|', '\n').split('\n')
+        data = "\n".join(sub.strip() for sub in factored_desc)
+
+        await interaction.response.send_message(data)
+        
 
 
 
@@ -108,7 +123,7 @@ class Matching(Cog):
         member = member if member else interaction.user
         profile:dict = get_profile(member)
         if not profile:
-            return await interaction.response.send_message("I couldnt find your profile!")
+            return await interaction.response.send_message("I couldnt find your")
         
         profiles = get_compatible(member)
         ignore_selected = get_compatible(member, ignore_selected=True)

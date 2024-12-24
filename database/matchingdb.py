@@ -1,8 +1,64 @@
 from discord import Embed, Member, Message, User
+from discord.ext.commands import Bot
 from database.databasev2 import MATCHING, NoProfileException
 from time import time
 
 # puts the profile in a queue to be verifed
+
+class UserNotFoundException(BaseException):
+    def __init__(self, message="The discord user is out of scope of the bot"):
+        self.message = message
+        super().__init__(self.message)
+
+class Profile():
+    def __init__(self, bot:Bot, data:dict):
+        self.bot = bot
+        if data == None:
+            raise NoProfileException()
+        self.id = data.get('user_id')
+        self.user = bot.get_user(self.id)
+        if not self.user: raise UserNotFoundException()
+        self.name = data.get('Name')
+        self.pronouns = data.get('Pronouns')
+        self.gender = data.get('Gender')
+        self.age = data.get('Age')
+        self.sexuality = data.get('Sexuality')
+        self.bio = data.get('Bio')
+        self._id = data.get('_id')
+
+    def fetch_data(self):
+        return MATCHING.find_one({'_id':self._id})
+
+    def edit(self, data):
+        result = MATCHING.update_one({'_id':self._id}, data)
+        return result
+    
+    def generate_embed(self, color=0xffa1dc):
+        description = f"""
+        ❥﹒User: {self.user.mention} | `{self.user.global_name}`
+        ❥﹒Name: `{self.name}`
+        ❥﹒Pronouns: `{self.pronouns}`
+        ❥﹒Gender: `{self.gender}`
+        ❥﹒Age: `{self.age}`
+        ❥﹒Sexuality: `{self.sexuality}`
+        ❥﹒Bio:\n```{self.bio}```
+        """
+
+        profile_embed = Embed(
+        title="Profile",
+        description=description,
+        color=color)
+        profile_embed.set_footer(text=f'Profile Id: {self._id}')
+        profile_embed.set_author(name=self.user.global_name, icon_url=self.user.avatar.url)
+
+        return profile_embed
+        
+
+    
+    
+
+
+
 def queue_profile(user:Member, message:Message) -> None:
     """
     Adds the users queue message to be verified
